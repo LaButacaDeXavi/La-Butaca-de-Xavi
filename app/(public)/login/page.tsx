@@ -23,12 +23,21 @@ export default function AdminLoginPage() {
     setError("")
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (error) return toast.error("Error al iniciar session", { description: error.message })
+      if (error) {
+        console.log(error.message)
+        return toast.error("Error al iniciar session", { description: error.message })
+      }
+      
+      router.push('/admin');
+      toast.success('Has iniciado sesión exitosamente');
+    } catch (error) {
 
-    router.push('/admin');
-    toast.success('Has iniciado sesión exitosamente');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

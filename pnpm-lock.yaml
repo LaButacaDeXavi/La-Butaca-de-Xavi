@@ -104,6 +104,9 @@ importers:
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
+      browser-image-compression:
+        specifier: ^2.0.2
+        version: 2.0.2
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -119,6 +122,9 @@ importers:
       embla-carousel-react:
         specifier: 8.5.1
         version: 8.5.1(react@19.2.0)
+      html5-qrcode:
+        specifier: ^2.3.8
+        version: 2.3.8
       input-otp:
         specifier: 1.4.1
         version: 1.4.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1286,6 +1292,9 @@ packages:
     resolution: {integrity: sha512-GlF5wPWnSa/X5LKM1o0wz0suXIINz1iHRLvTS+sLyi7XPbe5ycmYI3DlZqVGZZtDgl4DmasFg7gOB3JYbphV5g==}
     hasBin: true
 
+  browser-image-compression@2.0.2:
+    resolution: {integrity: sha512-pBLlQyUf6yB8SmmngrcOw3EoS4RpQ1BcylI3T9Yqn7+4nrQTXJD4sJDe5ODnJdrvNMaio5OicFo75rDyJD2Ucw==}
+
   browserslist@4.28.1:
     resolution: {integrity: sha512-ZC5Bd0LgJXgwGqUknZY/vkUQ04r8NXnJZ3yYi4vDmSiZmC/pdSN0NbNRPxZpbtO4uAfDUAFffO8IZoM3Gj8IkA==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
@@ -1424,6 +1433,9 @@ packages:
 
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
+
+  html5-qrcode@2.3.8:
+    resolution: {integrity: sha512-jsr4vafJhwoLVEDW3n1KvPnCCXWaQfRng0/EEYk1vNcQGcG/htAdhJX0be8YyqMoSz7+hZvOZSTAepsabiuhiQ==}
 
   iceberg-js@0.8.1:
     resolution: {integrity: sha512-1dhVQZXhcHje7798IVM+xoo/1ZdVfzOMIc8/rgVSijRK38EDqOJoGula9N/8ZI5RD8QTxNQtK/Gozpr+qUqRRA==}
@@ -1822,6 +1834,9 @@ packages:
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     hasBin: true
+
+  uzip@0.20201231.0:
+    resolution: {integrity: sha512-OZeJfZP+R0z9D6TmBgLq2LHzSSptGMGDGigGiEe0pr8UBe/7fdflgHlHBNDASTXB5jnFuxHpNaJywSg8YFeGng==}
 
   vaul@1.1.2:
     resolution: {integrity: sha512-ZFkClGpWyI2WUQjdLJ/BaGuV6AVQiJ3uELGk3OYtP+B6yCO7Cmn9vPFXVJkRaGkOJu3m8bQMgtyzNHixULceQA==}
@@ -2902,6 +2917,10 @@ snapshots:
 
   bcryptjs@3.0.3: {}
 
+  browser-image-compression@2.0.2:
+    dependencies:
+      uzip: 0.20201231.0
+
   browserslist@4.28.1:
     dependencies:
       baseline-browser-mapping: 2.9.11
@@ -3021,6 +3040,8 @@ snapshots:
   get-nonce@1.0.1: {}
 
   graceful-fs@4.2.11: {}
+
+  html5-qrcode@2.3.8: {}
 
   iceberg-js@0.8.1: {}
 
@@ -3382,6 +3403,8 @@ snapshots:
       react: 19.2.0
 
   uuid@8.3.2: {}
+
+  uzip@0.20201231.0: {}
 
   vaul@1.1.2(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
     dependencies:

@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   Sparkles,
+  PercentSquareIcon
 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -22,10 +23,11 @@ import { ThemeToggle } from "../layout/theme-toggle"
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/funciones", label: "Funciones", icon: CalendarDays },
   { href: "/admin/teatros", label: "Teatros", icon: Theater },
   { href: "/admin/artistas", label: "Artistas", icon: Users },
   { href: "/admin/obras", label: "Obras", icon: Sparkles },
-  { href: "/admin/funciones", label: "Funciones", icon: CalendarDays },
+  { href: "/admin/promociones", label: "Promociones", icon: PercentSquareIcon },
   { href: "/admin/ordenes", label: "Órdenes", icon: ShoppingCart },
   { href: "/admin/scanner", label: "Scanner QR", icon: QrCode },
 ]
@@ -47,7 +49,7 @@ export function AdminNav() {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-card border-r border-border min-h-screen">
         <div className="p-6 border-b border-border">
-          <h1 className="text-xl font-bold text-primary">La Butaca de Xavi</h1>
+          <h1 className="text-xl font-bold text-primary">La Butaca de <span className="text-accent">Xavi</span></h1>
           <div className="flex items-center justify-between mt-2">
             <p className="text-sm text-muted-foreground">Panel Admin</p>
             <ThemeToggle />
@@ -91,7 +93,7 @@ export function AdminNav() {
       {/* Mobile Navbar */}
       <div className="lg:hidden mb-25 fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-16">
         <div className="flex items-center justify-between px-4 h-full">
-          <h1 className="text-lg font-bold text-primary">La Butaca de Xavi</h1>
+          <h1 className="text-lg font-bold text-primary">La Butaca de <span className="text-accent">Xavi</span></h1>
           
           <div className="flex items-center gap-2">
             <ThemeToggle />

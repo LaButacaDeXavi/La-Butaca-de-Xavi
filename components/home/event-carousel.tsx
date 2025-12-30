@@ -50,7 +50,7 @@ export function EventCarousel({ title, events }: EventCarouselProps) {
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {events.map((event) => (
-          <div key={event.id} className="flex-none w-[250px] md:w-[280px]">
+          <div key={event.id} className="flex-none w-62.5 md:w-70 select-none">
             <EventCard event={event} />
           </div>
         ))}

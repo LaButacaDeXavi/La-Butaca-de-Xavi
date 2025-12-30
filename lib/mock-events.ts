@@ -10,14 +10,27 @@ export const featuredEvents: Event[] = [
     venue: "Teatro Gran Rex",
     location: "Buenos Aires",
     price: 15000,
-    image: "/hamlet-theater-stage-dramatic-lighting.jpg",
+    image: "https://okozqwpejvdyflvvwnsr.supabase.co/storage/v1/object/public/la-butaca-xavi/plays/main/45e153e8-6863-4c84-8a80-e8dce0c48626.webp",
     gallery: [
       "/hamlet-theater-stage-dramatic-lighting.jpg",
       "/hamlet-theater-stage-dramatic-lighting.jpg",
       "/hamlet-theater-stage-dramatic-lighting.jpg",
     ],
     featured: true,
-    has2x1Promo: true,
+    sections: [
+      { id: "1", name: "General", price: 10000 },
+      { id: "2", name: "Platea", price: 13000 }
+    ],
+    artist: [],
+    promotion: {
+      id: "1",
+      name: "Promocion 2 x 1",
+      description: "Al comprar 2 entradas pagas solo 1 (valido 1 sola vez)",
+      value: undefined,
+      maxUsesPerOrder: 1,
+      minTickets: 2,
+      type: "2x1"
+    },
     category: "teatro",
     description: "La obra maestra de Shakespeare llega al Gran Rex con un elenco espectacular.",
   },
@@ -33,7 +46,19 @@ export const featuredEvents: Event[] = [
     image: "/spanish-theater-dramatic-stage.jpg",
     gallery: ["/spanish-theater-dramatic-stage.jpg", "/theater-black-dress-performers.jpg"],
     featured: true,
-    has2x1Promo: true,
+    sections: [
+      { id: "1", name: "General", price: 10000 },
+      { id: "2", name: "Platea", price: 13000 }
+    ],
+    artist: [],
+    promotion: {
+      id: "1",
+      name: "Promocion 2 x1",
+      value: undefined,
+      maxUsesPerOrder: 1,
+      minTickets: 2,
+      type: "2x1"
+    },
     category: "teatro",
     description: "Una interpretación moderna del clásico de Federico García Lorca.",
   },
@@ -49,7 +74,19 @@ export const featuredEvents: Event[] = [
     image: "/little-prince-musical-theater-stars.jpg",
     gallery: ["/little-prince-musical-theater-stars.jpg", "/family-musical-colorful-stage.jpg"],
     featured: true,
-    has2x1Promo: false,
+    sections: [
+      { id: "1", name: "General", price: 10000 },
+      { id: "2", name: "Platea", price: 13000 }
+    ],
+    artist: [],
+    promotion: {
+      id: "1",
+      name: "Promocion 2 x1",
+      value: undefined,
+      maxUsesPerOrder: 1,
+      minTickets: 2,
+      type: "2x1"
+    },
     category: "teatro",
     description: "El musical para toda la familia basado en el clásico de Saint-Exupéry.",
   },
@@ -66,7 +103,19 @@ export const upcomingEvents: Event[] = [
     location: "Buenos Aires",
     price: 14000,
     image: "/waiting-for-godot-minimalist-stage.jpg",
-    has2x1Promo: true,
+    sections: [
+      { id: "1", name: "General", price: 10000 },
+      { id: "2", name: "Platea", price: 13000 }
+    ],
+    artist: [],
+    promotion: {
+      id: "1",
+      name: "Promocion 2 x1",
+      value: undefined,
+      maxUsesPerOrder: 1,
+      minTickets: 2,
+      type: "2x1"
+    },
     category: "teatro",
     description: "La obra existencialista más importante del siglo XX.",
   },
@@ -80,7 +129,20 @@ export const upcomingEvents: Event[] = [
     location: "Buenos Aires",
     price: 13000,
     image: "/argentine-theater-comedy-family.jpg",
-    has2x1Promo: true,
+    sections: [
+      { id: "1", name: "General", price: 10000 },
+      { id: "2", name: "Platea", price: 13000 }
+    ],
+    artist: [],
+    promotion: {
+      id: "1",
+      name: "Promocion 2 x 1",
+      description: "Al comprar 2 entradas pagas solo 1 (valido 1 sola vez)",
+      value: undefined,
+      maxUsesPerOrder: 1,
+      minTickets: 2,
+      type: "2x1"
+    },
     category: "teatro",
     description: "Comedia dramática argentina sobre una familia y su peculiar abuela.",
   },
@@ -94,7 +156,19 @@ export const upcomingEvents: Event[] = [
     location: "Buenos Aires",
     price: 20000,
     image: "/chicago-musical-jazz-dancers.jpg",
-    has2x1Promo: false,
+    sections: [
+      { id: "1", name: "General", price: 10000 },
+      { id: "2", name: "Platea", price: 13000 }
+    ],
+    artist: [],
+    promotion: {
+      id: "1",
+      name: "Promocion 2 x1",
+      value: undefined,
+      maxUsesPerOrder: 1,
+      minTickets: 2,
+      type: "2x1"
+    },
     category: "musica",
     description: "El icónico musical de Broadway llega a Buenos Aires.",
   },
@@ -108,7 +182,19 @@ export const upcomingEvents: Event[] = [
     location: "Buenos Aires",
     price: 16000,
     image: "/ballet-romeo-juliet-dancers.jpg",
-    has2x1Promo: true,
+    sections: [
+      { id: "1", name: "General", price: 10000 },
+      { id: "2", name: "Platea", price: 13000 }
+    ],
+    artist: [],
+    promotion: {
+      id: "1",
+      name: "Promocion 2 x1",
+      value: undefined,
+      maxUsesPerOrder: 1,
+      minTickets: 2,
+      type: "2x1"
+    },
     category: "danza",
     description: "Ballet clásico con música de Prokofiev.",
   },
@@ -122,8 +208,61 @@ export const upcomingEvents: Event[] = [
     location: "Buenos Aires",
     price: 11000,
     image: "/stand-up-comedy-microphone-spotlight.jpg",
-    has2x1Promo: false,
+    sections: [
+      { id: "1", name: "General", price: 10000 },
+      { id: "2", name: "Platea", price: 13000 }
+    ],
+    artist: [],
+    promotion: {
+      id: "1",
+      name: "Promocion 2 x1",
+      value: undefined,
+      maxUsesPerOrder: 1,
+      minTickets: 2,
+      type: "2x1"
+    },
     category: "comedia",
     description: "Una noche llena de risas con los mejores comediantes argentinos.",
   },
+]
+
+
+export const provinces = [
+  { id: "1", name: "Santiago del Estero" },
+  { id: "2", name: "Tucumán" },
+  { id: "3", name: "Salta" },
+  { id: "4", name: "Jujuy" },
+]
+
+export const localitiesByProvince: Record<string, Array<{ id: string; name: string }>> = {
+  "1": [
+    { id: "1-1", name: "Santiago del Estero Capital" },
+    { id: "1-2", name: "La Banda" },
+    { id: "1-3", name: "Termas de Río Hondo" },
+    { id: "1-4", name: "Frías" },
+  ],
+  "2": [
+    { id: "2-1", name: "San Miguel de Tucumán" },
+    { id: "2-2", name: "Yerba Buena" },
+    { id: "2-3", name: "Tafí Viejo" },
+    { id: "2-4", name: "Concepción" },
+  ],
+  "3": [
+    { id: "3-1", name: "Salta Capital" },
+    { id: "3-2", name: "Orán" },
+    { id: "3-3", name: "Tartagal" },
+    { id: "3-4", name: "Cafayate" },
+  ],
+  "4": [
+    { id: "4-1", name: "San Salvador de Jujuy" },
+    { id: "4-2", name: "San Pedro de Jujuy" },
+    { id: "4-3", name: "Libertador General San Martín" },
+    { id: "4-4", name: "Palpalá" },
+  ],
+}
+
+export const categories = [
+  { name: "Comedia" },
+  { name: "Suspenso" },
+  { name: "Terror" }
 ]

@@ -1,137 +1,128 @@
 "use client"
 
 import { useState } from "react"
-import type { Event } from "@/types/event"
+import type { Event, Promotion } from "@/types/event"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Minus, Plus, ShoppingCart } from "lucide-react"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem
+} from "@/components/ui/select"
+import { ShoppingCart } from "lucide-react"
 import { formatPrice } from "@/lib/cart-utils"
 import { toast } from "sonner"
-import { useCart } from "@/context/cart-context"
+import { useRouter } from "next/navigation"
+import {
+  createCheckoutSession,
+  upsertCheckoutItem
+} from "@/lib/actions/session"
 
 interface TicketSelectorProps {
   event: Event
 }
 
 export function TicketSelector({ event }: TicketSelectorProps) {
-  const [quantity, setQuantity] = useState(1)
-  const { addToCart } = useCart();
-  const handleAggreate = () => {
-    if (!event) return
-    addToCart({
-      event,
-      quantity
-    })
-    toast.success("Agregado al carrito")
+  const router = useRouter()
+
+  const [quantities, setQuantities] = useState<Record<string, number>>(
+    () =>
+      Object.fromEntries(
+        event.sections.map(section => [section.id, 0])
+      )
+  )
+
+  const totalTickets = Object.values(quantities).reduce(
+    (a, b) => a + b,
+    0
+  )
+
+
+  const handleQuantityChange = (sectionId: string, value: string) => {
+    setQuantities(prev => ({
+      ...prev,
+      [sectionId]: Number(value)
+    }))
   }
 
-  const calculateTotal = () => {
-    if (event.has2x1Promo && quantity >= 2) {
-      const pairs = Math.floor(quantity / 2)
-      const singles = quantity % 2
-      return pairs * event.price + singles * event.price
+  const handleSubmit = async () => {
+    if (totalTickets === 0) {
+      toast.error("Seleccioná al menos una entrada")
+      return
     }
-    return quantity * event.price
-  }
 
-  const calculateDiscount = () => {
-    if (event.has2x1Promo && quantity >= 2) {
-      const regularPrice = quantity * event.price
-      const discountedPrice = calculateTotal()
-      return regularPrice - discountedPrice
+    try {
+      await createCheckoutSession(event.id)
+
+      for (const section of event.sections) {
+        const qty = quantities[section.id]
+        if (qty > 0) {
+          await upsertCheckoutItem(section.id, qty)
+        }
+      }
+
+      router.push("/carrito")
+    } catch {
+      toast.error("No se pudo iniciar la compra")
     }
-    return 0
   }
-
-  const handleDecrease = () => {
-    if (quantity > 1) setQuantity(quantity - 1)
-  }
-
-  const handleIncrease = () => {
-    if (quantity < 10) setQuantity(quantity + 1)
-  }
-
-  const discount = calculateDiscount()
-  const total = calculateTotal()
 
   return (
     <Card className="p-6 bg-card border-border sticky top-24">
       <div className="space-y-6">
-        <div>
-          <h3 className="text-2xl font-bold text-foreground mb-2">Comprar Entradas</h3>
-          <p className="text-sm text-muted-foreground">Selecciona la cantidad de entradas</p>
-        </div>
 
-        {/* Price */}
-        <div className="pb-4 border-b border-border">
-          <p className="text-sm text-muted-foreground mb-1">Precio por entrada</p>
-          <p className="text-3xl font-bold text-foreground">{formatPrice(event.price)}</p>
-        </div>
+        <h3 className="text-2xl font-bold">Comprar Entradas</h3>
 
-        {/* Quantity Selector */}
-        <div>
-          <p className="text-sm text-muted-foreground mb-3">Cantidad</p>
-          <div className="flex items-center justify-center gap-4">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleDecrease}
-              disabled={quantity <= 1}
-              className="h-12 w-12 border-border bg-transparent"
+        {/* Tabla de secciones */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 text-sm font-semibold text-muted-foreground border-b pb-2">
+            <span>Tipo de ticket</span>
+            <span className="text-center">Valor</span>
+            <span className="text-right">Cantidad</span>
+          </div>
+
+          {event.sections.map(section => (
+            <div
+              key={section.id}
+              className="grid grid-cols-3 items-center gap-4"
             >
-              <Minus className="h-4 w-4" />
-            </Button>
-            <span className="text-3xl font-bold text-foreground w-12 text-center">{quantity}</span>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleIncrease}
-              disabled={quantity >= 10}
-              className="h-12 w-12 border-border"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+              <span className="font-medium">{section.name}</span>
 
-        {/* Promo Info */}
-        {event.has2x1Promo && (
-          <div className="bg-accent/20 border border-accent rounded-lg p-4">
-            <p className="text-sm font-semibold text-accent-foreground text-center">🎉 Promoción 2x1 aplicada</p>
-          </div>
-        )}
+              <span className="text-center">
+                {formatPrice(section.price)}
+              </span>
 
-        {/* Price Breakdown */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              Subtotal ({quantity} {quantity === 1 ? "entrada" : "entradas"})
-            </span>
-            <span className="text-foreground font-medium">{formatPrice(quantity * event.price)}</span>
-          </div>
-
-          {discount > 0 && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-accent font-medium">Descuento 2x1</span>
-              <span className="text-accent font-medium">-{formatPrice(discount)}</span>
+              <Select
+                value={String(quantities[section.id])}
+                onValueChange={value =>
+                  handleQuantityChange(section.id, value)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <SelectItem key={i} value={String(i)}>
+                      {i}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
-
-          <div className="pt-3 border-t border-border flex items-center justify-between">
-            <span className="text-lg font-semibold text-foreground">Total</span>
-            <span className="text-2xl font-bold text-primary">{formatPrice(total)}</span>
-          </div>
+          ))}
         </div>
 
-        {/* Buy Button */}
         <Button
-          className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg"
-          size="lg"
-          onClick={handleAggreate}
+          className="w-full h-12 text-lg"
+          onClick={handleSubmit}
         >
-          <ShoppingCart className="h-5 w-5 mr-2" />
-          Agregar al carrito
+          <ShoppingCart className="mr-2" />
+          Comprar
         </Button>
+
       </div>
     </Card>
   )

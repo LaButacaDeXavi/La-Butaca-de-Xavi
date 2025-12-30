@@ -2,19 +2,17 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ShoppingCart, User, Menu } from "lucide-react"
+import {   Menu } from "lucide-react"
 import { useState } from "react"
 import { ThemeToggle } from "./theme-toggle"
-import { useCart } from "@/context/cart-context"
 
 
 export function Header() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { itemCount } = useCart();
 
   return (
-    <header className="bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-50 w-full border-b border-border/40">
+    <header className="bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-50 w-full border-b border-border/40 select-none">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between gap-4">
           {/* Logo - Updated brand name and improved mobile responsiveness */}
@@ -36,12 +34,6 @@ export function Header() {
               Eventos
             </Link>
             <Link
-              href="/teatros"
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-            >
-              Teatros
-            </Link>
-            <Link
               href="/contacto"
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
@@ -53,14 +45,6 @@ export function Header() {
           <div className="flex items-center gap-2 md:gap-3 shrink-0">
             {/* ThemeToggle */}
             <ThemeToggle />
-            <Link href="/carrito">
-              <Button variant="ghost" size="icon" className="relative h-9 w-9 md:h-10 md:w-10">
-                <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />
-                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center">
-                  {itemCount ?? 0}
-                </span>
-              </Button>
-            </Link>
             <Button
               variant="ghost"
               size="icon"

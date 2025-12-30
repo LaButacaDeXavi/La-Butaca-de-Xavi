@@ -1,72 +1,73 @@
 export interface Theater {
   id: string
   name: string
-  address: string
   city: string
+  address: string
   mapUrl: string
-  createdAt: Date
 }
 
 export interface Artist {
-  id: string
-  name: string
-  bio?: string
-  image?: string
-  socialMedia: {
-    instagram?: string
-    facebook?: string
-    twitter?: string
-  }
-  createdAt: Date
+  id: string,
+  name: string,
+  avatar_url: string
+  instagram_url?: string,
+  twittter_url?: string,
+  facebook_url?: string
 }
 
-export interface Show {
+export interface Play {
   id: string
   title: string
-  description: string
+  subtitle?: string
+  description?: string
   duration: number // en minutos
   genre: string
   mainImage: string
-  gallery: string[]
-  theaterId: string
-  artistIds: string[]
-  createdAt: Date
+  gallery?: string[]
+  artists?: Partial<Artist>[]
 }
 
-export interface ShowFunction {
+export interface Section {
   id: string
-  showId: string
-  theaterId: string
-  date: Date
-  time: string
+  name: string
   totalSeats: number
   availableSeats: number
   price: number
-  has2x1Promo: boolean
+}
+
+
+export interface Performances {
+  id: string
+  play: Omit<Play, 'subtitle' | 'description' | 'duration' | 'mainImage' | 'gallery' | 'artists'>
+  theater: Omit<Theater, 'mapUrl' | 'city'>
+  date: Date
+  time: string
+  sections: Section[]  // Agregar esto
+  promotion?: Promotion
   status: "active" | "sold-out" | "cancelled"
-  createdAt: Date
 }
 
 export interface Order {
   id: string
-  functionId: string
+  play: string
+  performance: { id: string, date: string, time: string }
   customerName: string
   customerEmail: string
   customerPhone: string
+  customerDni: string
   ticketQuantity: number
   totalAmount: number
   discount: number
   finalAmount: number
   status: "pending" | "confirmed" | "cancelled"
-  paymentMethod: string
-  createdAt: Date
   tickets: Ticket[]
+  createdAt: Date
 }
 
 export interface Ticket {
   id: string
   orderId: string
-  functionId: string
+  showId: string
   qrCode: string
   scanned: boolean
   scannedAt?: Date
@@ -86,4 +87,36 @@ export interface AdminUser {
   email: string
   name: string
   role: "admin" | "scanner"
+}
+
+
+// types/scanner.ts
+export type ScanResult = {
+  success: boolean
+  message: string
+  ticket?: {
+    id: string
+    orderId: string
+    customerName: string
+    showTitle: string
+    date: string
+    time: string
+    seatNumber?: string
+    alreadyScanned: boolean
+    scannedAt?: string
+  }
+}
+
+export interface Promotion {
+  id: string
+  name: string
+  description: string
+  type: "percentage" | "fixed" | "2x1"
+  value: number
+  requires_code: boolean
+  max_uses_per_order: number
+  min_tickets: number
+  is_active: boolean
+  valid_from: Date
+  valid_until: Date
 }
