@@ -27,6 +27,7 @@ import { toast } from "sonner"
 import type { Promotion } from "@/types/admin"
 import { createPromotion, deletePromotion, updatePromotion } from "./actions"
 import type { PromotionPayload } from "./actions"
+import { formatDate } from "@/lib/cart-utils"
 
 interface PromotionsPageProps {
     promotions: Promotion[]
@@ -69,7 +70,7 @@ const parseDateInput = (value: string | Date) => {
     if (typeof value === "string" && value.includes("T")) return value
     const date = typeof value === "string" ? parseISO(value) : value
     if (Number.isNaN(date.getTime())) return ""
-    return format(date, "yyyy-MM-dd'T'HH:mm", { locale: es })
+    return format(date, "yyyy-MM-dd", { locale: es })
 }
 
 const toNumber = (value: string, fallback = 0) => {
@@ -86,8 +87,8 @@ const normalizePayload = (state: FormState): PromotionPayload => ({
     max_uses_per_order: toNumber(state.max_uses_per_order, 1),
     min_tickets: toNumber(state.min_tickets, 1),
     is_active: state.is_active,
-    valid_from: new Date(state.valid_from),
-    valid_until: new Date(state.valid_until),
+    valid_from: state.valid_from,
+    valid_until: state.valid_until,
 })
 
 export default function PromotionsPage({ promotions: initialPromotions }: PromotionsPageProps) {
@@ -307,11 +308,11 @@ export default function PromotionsPage({ promotions: initialPromotions }: Promot
                                         icon={<TicketCheck className="h-4 w-4" />}
                                     />
                                     <Badge
-                                        label={`Desde: ${format(promotion.valid_from, "PPPp", { locale: es })}`}
+                                        label={`Desde: ${formatDate(promotion.valid_from)}`}
                                         icon={<Calendar className="h-4 w-4" />}
                                     />
                                     <Badge
-                                        label={`Hasta: ${format(promotion.valid_until, "PPPp", { locale: es })}`}
+                                        label={`Hasta: ${formatDate(promotion.valid_until)}`}
                                         icon={<Calendar className="h-4 w-4" />}
                                     />
                                     <Badge
@@ -430,7 +431,7 @@ export default function PromotionsPage({ promotions: initialPromotions }: Promot
                                     <Label htmlFor="validFrom">Válido desde</Label>
                                     <Input
                                         id="validFrom"
-                                        type="datetime-local"
+                                        type="date"
                                         value={formState.valid_from}
                                         onChange={event => setFormState(prev => ({ ...prev, valid_from: event.target.value }))}
                                         required
@@ -440,7 +441,7 @@ export default function PromotionsPage({ promotions: initialPromotions }: Promot
                                     <Label htmlFor="validUntil">Válido hasta</Label>
                                     <Input
                                         id="validUntil"
-                                        type="datetime-local"
+                                        type="date"
                                         value={formState.valid_until}
                                         onChange={event => setFormState(prev => ({ ...prev, valid_until: event.target.value }))}
                                         required

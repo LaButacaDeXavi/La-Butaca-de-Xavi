@@ -4,12 +4,17 @@ import { getArtists } from "../artistas/actions";
 
 
 export default async function Page() {
+  try {
+    const [{ plays }, { artists }] = await Promise.all([
+      getPlays(),
+      getArtists()
+    ])
 
-  const [{ plays }, { artists }] = await Promise.all([
-    getPlays(),
-    getArtists()
-  ])
+    return <PlaysPage plays={plays} artists={artists} />
+  } catch (error) {
+    return <PlaysPage plays={[]} artists={[]} />
+
+  }
 
 
-  return <PlaysPage plays={plays} artists={artists} />
 }

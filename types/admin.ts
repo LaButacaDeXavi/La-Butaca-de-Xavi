@@ -38,13 +38,14 @@ export interface Section {
 
 export interface Performances {
   id: string
+  isMain: boolean
   play: Omit<Play, 'subtitle' | 'description' | 'duration' | 'mainImage' | 'gallery' | 'artists'>
   theater: Omit<Theater, 'mapUrl' | 'city'>
-  date: Date
+  date: string
   time: string
   sections: Section[]  // Agregar esto
   promotion?: Promotion
-  status: "active" | "sold-out" | "cancelled"
+  status: "active" | "sold-out" | "cancelled" | "desactivate"
 }
 
 export interface Order {
@@ -85,6 +86,7 @@ export interface DashboardStats {
 export interface AdminUser {
   id: string
   email: string
+  password?: string
   name: string
   role: "admin" | "scanner"
 }
@@ -117,6 +119,6 @@ export interface Promotion {
   max_uses_per_order: number
   min_tickets: number
   is_active: boolean
-  valid_from: Date
-  valid_until: Date
+  valid_from: string
+  valid_until: string
 }

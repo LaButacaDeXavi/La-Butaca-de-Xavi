@@ -1,17 +1,17 @@
 import EventoPage from "./evento"
 import { createClient } from "@/lib/supabase/client";
+import { Event } from "@/types/event";
 import { notFound } from "next/navigation";
 
 export default async function page({ params }: { params: { id: string } }) {
   const { id } = await params;
   const performance = await getEventById(id);
 
+
   if (!performance) return notFound();
 
   return <EventoPage event={performance} />
 }
-
-
 
 
 export async function getEventById(id: string) {
@@ -76,6 +76,8 @@ export async function getEventById(id: string) {
       )
     `)
     .eq("id", id)
+    .eq('status','active')
+    .lte('date',new Date().toLocaleDateString())
     .single()
 
   if (error || !data) {
@@ -87,7 +89,7 @@ export async function getEventById(id: string) {
      MAPEADO FINAL
      ====================== */
 
-  const event = {
+  const event: Event = {
     id: data.id,
     date: data.date,
     time: data.time,
@@ -129,23 +131,23 @@ export async function getEventById(id: string) {
     promotion:
       data.performances_discounts?.[0]?.discount_types
         ? {
-            id: data.performances_discounts[0].discount_types.id,
-            name: data.performances_discounts[0].discount_types.name,
-            description:
-              data.performances_discounts[0].discount_types.description,
-            type: data.performances_discounts[0].discount_types.type,
-            value: data.performances_discounts[0].discount_types.value,
-            minTickets:
-              data.performances_discounts[0].discount_types.min_tickets,
-            maxUsesPerOrder:
-              data.performances_discounts[0].discount_types.max_uses_per_order,
-            validFrom:
-              data.performances_discounts[0].discount_types.valid_from,
-            validUntil:
-              data.performances_discounts[0].discount_types.valid_until,
-            isActive:
-              data.performances_discounts[0].discount_types.is_active
-          }
+          id: data.performances_discounts[0].discount_types.id,
+          name: data.performances_discounts[0].discount_types.name,
+          description:
+            data.performances_discounts[0].discount_types.description,
+          type: data.performances_discounts[0].discount_types.type,
+          value: data.performances_discounts[0].discount_types.value,
+          minTickets:
+            data.performances_discounts[0].discount_types.min_tickets,
+          maxUsesPerOrder:
+            data.performances_discounts[0].discount_types.max_uses_per_order,
+          validFrom:
+            data.performances_discounts[0].discount_types.valid_from,
+          validUntil:
+            data.performances_discounts[0].discount_types.valid_until,
+          isActive:
+            data.performances_discounts[0].discount_types.is_active
+        }
         : undefined
   }
 

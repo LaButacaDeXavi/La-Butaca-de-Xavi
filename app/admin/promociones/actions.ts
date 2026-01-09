@@ -30,11 +30,11 @@ const sanitizePayload = (promotion: PromotionPayload) => {
         type,
         value: type === "2x1" ? null : value,
         requires_code: null,
-        max_uses_per_order,
-        min_tickets,
+        max_uses_per_order: max_uses_per_order < 0 ? 0 : max_uses_per_order,
+        min_tickets: type === "2x1" && min_tickets < 2 ? 2 : value,
         is_active,
-        valid_from: valid_from instanceof Date ? valid_from.toISOString() : valid_from,
-        valid_until: valid_until instanceof Date ? valid_until.toISOString() : valid_until,
+        valid_from: valid_from ,
+        valid_until: valid_until 
     }
 }
 
@@ -149,8 +149,8 @@ export async function getPromotions(): Promise<{ promotions: Promotion[] }> {
 
         const promotions: Promotion[] = data.map(promotion => ({
             ...promotion,
-            valid_from: new Date(promotion.valid_from),
-            valid_until: new Date(promotion.valid_until)
+            valid_from: promotion.valid_from,
+            valid_until: promotion.valid_until
         }))
 
         return { promotions }

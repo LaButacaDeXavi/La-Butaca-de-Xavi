@@ -5,22 +5,32 @@ import { getPromotions } from "../promociones/actions";
 import { getPerformances } from "./actions";
 
 export default async function Page() {
-  const [{ performances: performancesData }, { plays }, { theaters: theatersData }, { promotions }] = await Promise.all([
-    getPerformances(),
-    getPlays(),
-    getTheaters(),
-    getPromotions(),
-  ])
 
-  const theaters = theatersData ?? []
-  const performances:any = performancesData ?? []
+  try {
+    const [{ performances: performancesData }, { plays }, { theaters: theatersData }, { promotions }] = await Promise.all([
+      getPerformances(),
+      getPlays(),
+      getTheaters(),
+      getPromotions(),
+    ])
 
-  return (
-    <FuncionesPage
-      perfomances={performances}
-      plays={plays}
-      promotions={promotions}
-      theaters={theaters}
-    />
-  )
+    const theaters = theatersData ?? []
+    const performances: any = performancesData ?? []
+
+    return (
+      <FuncionesPage
+        perfomances={performances}
+        plays={plays}
+        promotions={promotions}
+        theaters={theaters}
+      />
+    )
+  } catch (error) {
+    return (
+      <div>
+        No autorizado
+      </div>
+    )
+  }
+
 }

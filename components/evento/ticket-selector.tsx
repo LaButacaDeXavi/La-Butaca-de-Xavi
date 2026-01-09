@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import type { Event, Promotion } from "@/types/event"
+import type { Event } from "@/types/event"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,7 +17,8 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import {
   createCheckoutSession,
-  upsertCheckoutItem
+  upsertCheckoutItem,
+  validatePromotion
 } from "@/lib/actions/session"
 
 interface TicketSelectorProps {
@@ -26,7 +27,7 @@ interface TicketSelectorProps {
 
 export function TicketSelector({ event }: TicketSelectorProps) {
   const router = useRouter()
-
+  const [loading, setLoading] = useState(false)
   const [quantities, setQuantities] = useState<Record<string, number>>(
     () =>
       Object.fromEntries(
@@ -52,20 +53,23 @@ export function TicketSelector({ event }: TicketSelectorProps) {
       toast.error("Seleccioná al menos una entrada")
       return
     }
-
     try {
+      setLoading(true)
+
       await createCheckoutSession(event.id)
 
       for (const section of event.sections) {
         const qty = quantities[section.id]
         if (qty > 0) {
-          await upsertCheckoutItem(section.id, qty)
+          await upsertCheckoutItem(event.id, section.id, qty)
         }
       }
 
       router.push("/carrito")
     } catch {
       toast.error("No se pudo iniciar la compra")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -117,6 +121,7 @@ export function TicketSelector({ event }: TicketSelectorProps) {
 
         <Button
           className="w-full h-12 text-lg"
+          disabled={loading}
           onClick={handleSubmit}
         >
           <ShoppingCart className="mr-2" />

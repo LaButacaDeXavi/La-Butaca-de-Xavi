@@ -3,7 +3,7 @@ export interface Event {
   play: Play
   date: string
   time: string
-  theater:Theater
+  theater: Theater
   sections: EventSection[]
   promotion?: Promotion
   artist?: Artist[]
@@ -22,7 +22,7 @@ interface Play {
   description: string
   durationMinutes: string
   image: string
-  galerry: string[]
+  galerry?: string[]
 }
 
 interface Artist {
@@ -47,9 +47,9 @@ export type Promotion = {
   value?: number
   minTickets: number
   maxUsesPerOrder: number
-  validFrom:Date
-  validUntil:Date
-  isActive:boolean
+  validFrom: string
+  validUntil: string
+  isActive: boolean
 }
 
 type EventSection = {

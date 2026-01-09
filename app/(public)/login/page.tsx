@@ -24,14 +24,23 @@ export default function AdminLoginPage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
         console.log(error.message)
         return toast.error("Error al iniciar session", { description: error.message })
       }
-      
-      router.push('/admin');
+
+      if (!data.user) return toast.error("Error al iniciar session")
+
+      const {data:role,error:roleError} = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      const path = role?.role === "admin" ? "/admin" : "/scanner" 
+      router.push(path);
       toast.success('Has iniciado sesión exitosamente');
     } catch (error) {
 

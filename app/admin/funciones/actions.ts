@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/supabase/middlewareRole"
 
 interface UpdatePerformanceInput {
     id: string
+    isMain: boolean
     theaterId: string
     date: string
     time: string
@@ -18,6 +19,7 @@ interface UpdatePerformanceInput {
 }
 
 interface CreatePerformanceInput {
+    isMain: boolean
     playId: string
     theaterId: string
     date: string
@@ -43,6 +45,21 @@ export async function createPerformance(input: CreatePerformanceInput) {
         return { success: false, message: "Fecha y hora son obligatorias" }
     }
 
+    // Validar que la fecha no sea en el pasado
+    const [year, month, day] = input.date.split('-').map(Number)
+    const [hours, minutes] = input.time.split(':').map(Number)
+
+    // Crear fecha de la función en zona horaria local
+    const performanceDateTime = new Date(year, month - 1, day, hours, minutes)
+    const now = new Date()
+
+    if (performanceDateTime < now) {
+        return {
+            success: false,
+            message: "No se puede crear una función en una fecha y hora pasada"
+        }
+    }
+
     if (!input.sections || input.sections.length === 0) {
         return { success: false, message: "Debe existir al menos una sección" }
     }
@@ -63,6 +80,7 @@ export async function createPerformance(input: CreatePerformanceInput) {
     const { data: performance, error: performanceError } = await supabase
         .from("performances")
         .insert({
+            isMain: input.isMain,
             play_id: input.playId,
             theater_id: input.theaterId,
             date: input.date,
@@ -139,6 +157,7 @@ export async function updatePerformance(input: UpdatePerformanceInput) {
     const { error: perfError } = await supabase
         .from("performances")
         .update({
+            isMain: input.isMain,
             theater_id: input.theaterId,
             date: input.date,
             time: input.time,
@@ -150,30 +169,43 @@ export async function updatePerformance(input: UpdatePerformanceInput) {
         return { success: false, message: "Error al actualizar la función" }
     }
 
-    /* -------- replace sections -------- */
+    // Obtener secciones existentes
+    const { data: existingSections, error: sectionsError } = await supabase
+        .from('performances_sections')
+        .select('name')
+        .eq('performances_id', input.id)
 
-    await supabase
-        .from("performances_sections")
-        .delete()
-        .eq("performances_id", input.id)
-
-    const sectionsPayload = input.sections.map(s => ({
-        performances_id: input.id,
-        name: s.name,
-        price: s.price,
-        total_seats: s.totalSeats,
-        available_seats: s.totalSeats
-    }))
-
-    const { error: sectionError } = await supabase
-        .from("performances_sections")
-        .insert(sectionsPayload)
-
-    if (sectionError) {
-        return { success: false, message: "Error al actualizar secciones" }
+    if (sectionsError) {
+        return { success: false, message: "Error al obtener secciones existentes" }
     }
 
+    const existingNames = new Set(existingSections?.map(s => s.name.toLowerCase()) || [])
 
+    const newSections = input.sections.filter(s =>
+        !existingNames.has(s.name.toLowerCase())
+    )
+
+
+    if (newSections.length > 0) {
+        const sectionsPayload = newSections.map(s => ({
+            performances_id: input.id,
+            name: s.name,
+            price: s.price,
+            total_seats: s.totalSeats,
+            available_seats: s.totalSeats
+        }))
+
+        const { error: sectionError } = await supabase
+            .from("performances_sections")
+            .insert(sectionsPayload)
+
+        if (sectionError) {
+            console.log(sectionError)
+            return { success: false, message: "Error al agregar secciones" }
+        }
+    }
+
+    // Actualizar promociones
     await supabase
         .from("performances_discounts")
         .delete()
@@ -197,7 +229,6 @@ export async function updatePerformance(input: UpdatePerformanceInput) {
         message: "Función actualizada correctamente"
     }
 }
-
 
 
 export async function deletePerformance(id: string) {
@@ -239,6 +270,7 @@ export async function getPerformances() {
       date,
       time,
       status,
+      isMain,
       play:plays (
         id,
         title,
@@ -275,7 +307,7 @@ export async function getPerformances() {
 
     const performances = data.map(p => ({
         ...p,
-        date: new Date(p.date),
+        date: p.date,
         genre: p.play?.[0]?.category ?? "",
         promotion: p.discount?.[0]?.promotion ?? undefined
     }))

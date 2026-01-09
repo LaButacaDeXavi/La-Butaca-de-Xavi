@@ -11,7 +11,7 @@ interface ImageGalleryProps {
 
 export function ImageGallery({ images, title }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
-
+  
   if (!images || images.length === 0) return null
 
   const goToPrevious = () => {

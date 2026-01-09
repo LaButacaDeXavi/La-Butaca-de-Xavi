@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 // Rutas que requieren autenticación
-const protectedRoutes = ['/admin', '/admin/teatros', '/admin/funciones', '/admin/artistas', '/admin/obras'];
+const protectedRoutes = ['/scanner','/admin', '/admin/teatros', '/admin/funciones', '/admin/artistas', '/admin/obras','/admin/usuarios','/admin/ordenes','/admin/promociones','/admin/scanner','/admin/unauthorized'];
 
 // Rutas públicas que redirigen al dashboard si el usuario ya está autenticado
 const publicRoutes = [

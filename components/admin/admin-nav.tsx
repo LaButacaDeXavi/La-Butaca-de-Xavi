@@ -15,13 +15,14 @@ import {
   Menu,
   X,
   Sparkles,
-  PercentSquareIcon
+  PercentSquareIcon,
+  User
 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { ThemeToggle } from "../layout/theme-toggle"
 
-const navItems = [
+const navItemsAdmin = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/funciones", label: "Funciones", icon: CalendarDays },
   { href: "/admin/teatros", label: "Teatros", icon: Theater },
@@ -29,14 +30,26 @@ const navItems = [
   { href: "/admin/obras", label: "Obras", icon: Sparkles },
   { href: "/admin/promociones", label: "Promociones", icon: PercentSquareIcon },
   { href: "/admin/ordenes", label: "Órdenes", icon: ShoppingCart },
+  { href: "/admin/usuarios", label: "Usuarios", icon: User },
   { href: "/admin/scanner", label: "Scanner QR", icon: QrCode },
 ]
 
-export function AdminNav() {
+const navItemsScanner = [
+  { href: "/scanner", label: "Scanner QR", icon: QrCode },
+]
+
+
+interface AdminNavProps {
+  role: 'admin' | 'scanner'
+}
+
+export function AdminNav({ role }: AdminNavProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const supabase = createClient()
+
+  const items = role === "admin" ? navItemsAdmin : navItemsScanner
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut()
@@ -57,7 +70,7 @@ export function AdminNav() {
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => {
+          {items.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
 
@@ -65,11 +78,10 @@ export function AdminNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
                     ? "bg-primary text-primary-foreground"
                     : "text-foreground hover:bg-accent hover:text-accent-foreground"
-                }`}
+                  }`}
               >
                 <Icon className="w-5 h-5" />
                 <span>{item.label}</span>
@@ -94,7 +106,7 @@ export function AdminNav() {
       <div className="lg:hidden mb-25 fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-16">
         <div className="flex items-center justify-between px-4 h-full">
           <h1 className="text-lg font-bold text-primary">La Butaca de <span className="text-accent">Xavi</span></h1>
-          
+
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button
@@ -122,9 +134,8 @@ export function AdminNav() {
 
       {/* Mobile Sidebar */}
       <div
-        className={`lg:hidden fixed top-0 right-0 bottom-0 z-50 w-80 max-w-[85vw] bg-card border-l border-border transform transition-transform duration-300 ease-in-out ${
-          mobileMenuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`lg:hidden fixed top-0 right-0 bottom-0 z-50 w-80 max-w-[85vw] bg-card border-l border-border transform transition-transform duration-300 ease-in-out ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Header del Sidebar Mobile */}
@@ -145,7 +156,7 @@ export function AdminNav() {
 
           {/* Navigation Items */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navItems.map((item) => {
+            {items.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
 
@@ -154,11 +165,10 @@ export function AdminNav() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
                       ? "bg-primary text-primary-foreground"
                       : "text-foreground hover:bg-accent hover:text-accent-foreground"
-                  }`}
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span>{item.label}</span>

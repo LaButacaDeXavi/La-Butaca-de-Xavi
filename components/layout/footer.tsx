@@ -26,7 +26,7 @@ export function Footer() {
                     </div>
                     <div>
                         <h4 className="font-semibold text-foreground mb-4">Contacto</h4>
-                        <p className="text-sm text-muted-foreground">info@labutacadexavi.com</p>
+                        <p className="text-sm text-muted-foreground">labutacadexavi@gmail.com</p>
                     </div>
                 </div>
                 <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">

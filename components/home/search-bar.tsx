@@ -3,33 +3,22 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SearchBarProps } from "@/types/filter"
 import { Search } from "lucide-react"
 import { useState } from "react"
-import type { FilterOptions, SearchBarProps } from "@/types/filter"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 
-const calculateMonthSum = (i: number) => {
-  const now = new Date()
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + i, 1)
-  const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-  const monthName = months[nextMonth.getMonth()]
-  const currentYear = now.getFullYear()
-  const nextYear = nextMonth.getFullYear()
-  if (nextYear !== currentYear) {
-    return `${monthName} ${nextYear}`
-  }
-  return monthName
+
+const isValidDateString = (value?: string) => {
+  if (!value) return false
+  const date = new Date(value)
+  return !isNaN(date.getTime())
 }
 
-const getStartOfWeek = (date: Date) => {
-  const day = date.getDay()
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1) // Lunes como primer día
-  return new Date(date.setDate(diff))
-}
-
-const getEndOfWeek = (date: Date) => {
-  const startOfWeek = getStartOfWeek(new Date(date))
-  return new Date(startOfWeek.setDate(startOfWeek.getDate() + 6))
+// Función para parsear fecha en zona horaria local
+const parseLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number)
+  return new Date(year, month - 1, day)
 }
 
 const formatDate = (date: Date) => {
@@ -39,60 +28,155 @@ const formatDate = (date: Date) => {
   return `${year}-${month}-${day}`
 }
 
+const getStartOfWeek = (date: Date) => {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+  d.setDate(diff)
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+const getEndOfWeek = (date: Date) => {
+  const startOfWeek = getStartOfWeek(new Date(date))
+  const endOfWeek = new Date(startOfWeek)
+  endOfWeek.setDate(startOfWeek.getDate() + 6)
+  endOfWeek.setHours(23, 59, 59, 999)
+  return endOfWeek
+}
+
+const resolveInitialDateFilter = (
+  startDate?: string,
+  endDate?: string
+): string => {
+  if (!isValidDateString(startDate) || !isValidDateString(endDate)) {
+    return ""
+  }
+
+  // Usar parseLocalDate para evitar problemas de zona horaria
+  const start = parseLocalDate(startDate!)
+  const end = parseLocalDate(endDate!)
+  const now = new Date()
+
+  // Normalizar fechas para comparación (solo año-mes-día)
+  const normalizeForComparison = (d: Date) => formatDate(d)
+
+  const startStr = normalizeForComparison(start)
+  const endStr = normalizeForComparison(end)
+  const todayStr = normalizeForComparison(now)
+
+  // Hoy
+  if (startStr === todayStr && endStr === todayStr) {
+    return "Hoy"
+  }
+
+  // Mañana
+  const tomorrow = new Date(now)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const tomorrowStr = normalizeForComparison(tomorrow)
+  if (startStr === tomorrowStr && endStr === tomorrowStr) {
+    return "Mañana"
+  }
+
+  // Esta semana (semana completa lunes → domingo)
+  const thisWeekStart = getStartOfWeek(now)
+  const thisWeekEnd = getEndOfWeek(now)
+  if (startStr === normalizeForComparison(thisWeekStart) &&
+    endStr === normalizeForComparison(thisWeekEnd)) {
+    return "Esta Semana"
+  }
+
+  // Próxima semana
+  const nextWeekDate = new Date(now)
+  nextWeekDate.setDate(nextWeekDate.getDate() + 7)
+  const nextWeekStart = getStartOfWeek(nextWeekDate)
+  const nextWeekEnd = getEndOfWeek(nextWeekDate)
+  if (startStr === normalizeForComparison(nextWeekStart) &&
+    endStr === normalizeForComparison(nextWeekEnd)) {
+    return "Próxima Semana"
+  }
+
+  // Este mes
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  if (startStr === normalizeForComparison(monthStart) &&
+    endStr === normalizeForComparison(monthEnd)) {
+    return "Este Mes"
+  }
+
+  // Meses dinámicos (Ene 2025, Feb 2025, etc.)
+  const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+
+  // Verificar si es el primer y último día del mismo mes
+  if (start.getDate() === 1 &&
+    end.getDate() === new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate() &&
+    start.getMonth() === end.getMonth() &&
+    start.getFullYear() === end.getFullYear()) {
+    return `${months[start.getMonth()]} ${start.getFullYear()}`
+  }
+
+  return ""
+}
+
+const calculateMonthSum = (i: number) => {
+  const now = new Date()
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + i, 1)
+  const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+  const monthName = months[nextMonth.getMonth()]
+  const year = nextMonth.getFullYear()
+  return `${monthName} ${year}`
+}
+
 const convertDate = (str: string) => {
   const now = new Date()
   let startDate = ""
   let endDate = ""
-  
+
   switch (str) {
     case "Hoy":
       startDate = formatDate(now)
       endDate = formatDate(now)
       break
-      
+
     case "Mañana":
       const tomorrow = new Date(now)
       tomorrow.setDate(tomorrow.getDate() + 1)
       startDate = formatDate(tomorrow)
       endDate = formatDate(tomorrow)
       break
-      
+
     case "Esta Semana":
-      const thisWeekStart = getStartOfWeek(new Date(now))
-      const thisWeekEnd = getEndOfWeek(new Date(now))
+      const thisWeekStart = getStartOfWeek(now)
+      const thisWeekEnd = getEndOfWeek(now)
       startDate = formatDate(thisWeekStart)
       endDate = formatDate(thisWeekEnd)
       break
-      
+
     case "Próxima Semana":
-      const nextWeekStart = new Date(now)
-      nextWeekStart.setDate(nextWeekStart.getDate() + 7)
-      const nextWeekStartMonday = getStartOfWeek(nextWeekStart)
-      const nextWeekEnd = getEndOfWeek(new Date(nextWeekStartMonday))
-      startDate = formatDate(nextWeekStartMonday)
+      const nextWeekDate = new Date(now)
+      nextWeekDate.setDate(nextWeekDate.getDate() + 7)
+      const nextWeekStart = getStartOfWeek(nextWeekDate)
+      const nextWeekEnd = getEndOfWeek(nextWeekDate)
+      startDate = formatDate(nextWeekStart)
       endDate = formatDate(nextWeekEnd)
       break
-      
+
     case "Este Mes":
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
       const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
       startDate = formatDate(firstDayOfMonth)
       endDate = formatDate(lastDayOfMonth)
       break
-      
+
     default:
-      // Para los meses calculados dinámicamente (Ene, Feb, etc.)
-      if (str.includes("Ene") || str.includes("Feb") || str.includes("Mar") || 
-          str.includes("Abr") || str.includes("May") || str.includes("Jun") ||
-          str.includes("Jul") || str.includes("Ago") || str.includes("Sep") ||
-          str.includes("Oct") || str.includes("Nov") || str.includes("Dic")) {
-        
+      // Para los meses calculados dinámicamente
+      if (str.match(/^(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic) \d{4}$/)) {
         const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
         const parts = str.split(" ")
         const monthName = parts[0]
-        const year = parts[1] ? parseInt(parts[1]) : now.getFullYear()
+        const year = parseInt(parts[1])
         const monthIndex = months.indexOf(monthName)
-        
+
         if (monthIndex !== -1) {
           const firstDay = new Date(year, monthIndex, 1)
           const lastDay = new Date(year, monthIndex + 1, 0)
@@ -102,7 +186,7 @@ const convertDate = (str: string) => {
       }
       break
   }
-  
+
   return { startDate, endDate }
 }
 
@@ -117,34 +201,24 @@ const dates = [
   { id: "8", name: calculateMonthSum(3) }
 ]
 
-export function SearchBar({ title, provinces, localitiesByProvince }: SearchBarProps) {
-  const router = useRouter()
-  const [filters, setFilters] = useState<FilterOptions>({
-    search: "",
-    province: "",
-    locality: "",
-    date: "",
-    category: "",
+export function SearchBar({ title, q, startDate, endDate }: SearchBarProps) {
+  const router = useRouter();
+  const pathname = usePathname()
+  const [filters, setFilters] = useState({
+    search: q ?? "",
+    date: resolveInitialDateFilter(startDate, endDate),
   })
 
   const handleSearch = () => {
     const hasAnyFilter = Object.values(filters).some(value => value.trim() !== "")
     if (!hasAnyFilter) return
-    if (filters.province && !filters.locality) return
+
     const params = new URLSearchParams()
-    
+
     if (filters.search.trim()) {
       params.append("q", filters.search.trim())
     }
-    
-    if (filters.province) {
-      params.append("province", filters.province)
-    }
-    
-    if (filters.locality) {
-      params.append("locality", filters.locality)
-    }
-    
+
     if (filters.date) {
       const { startDate, endDate } = convertDate(filters.date)
       if (startDate && endDate) {
@@ -152,21 +226,23 @@ export function SearchBar({ title, provinces, localitiesByProvince }: SearchBarP
         params.append("endDate", endDate)
       }
     }
-    
-    if (filters.category) {
-      params.append("category", filters.category)
-    }
 
-    // Navegar con los query params
     router.push(`/eventos?${params.toString()}`)
   }
 
-  const availableLocalities = filters.province ? localitiesByProvince[filters.province] || [] : []
+  const handleClear = () => {
+    if (pathname === "/") return
+    setFilters({
+      search: "",
+      date: "",
+    })
+    // Navegar a la página sin filtros
+    router.push('/eventos')
+  }
 
   return (
     <div className="bg-card border border-border rounded-lg p-4 md:p-6 shadow-lg">
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 select-none">
-        {/* Input de búsqueda - visible en mobile y desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 select-none">
         <div className="md:col-span-1">
           <Input
             placeholder="Buscar eventos..."
@@ -176,42 +252,6 @@ export function SearchBar({ title, provinces, localitiesByProvince }: SearchBarP
           />
         </div>
 
-        {/* Provincia - solo desktop */}
-        <div className="hidden md:block">
-          <Select
-            value={filters.province}
-            onValueChange={(value) => setFilters({ ...filters, province: value, locality: "" })}
-          >
-            <SelectTrigger className="bg-background border-border text-foreground w-full">
-              <SelectValue placeholder="Provincia" />
-            </SelectTrigger>
-            <SelectContent>
-              {provinces.map(p => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Localidad - solo desktop */}
-        <div className="hidden md:block">
-          <Select
-            value={filters.locality}
-            onValueChange={(value) => setFilters({ ...filters, locality: value })}
-            disabled={!filters.province}
-          >
-            <SelectTrigger className="bg-background border-border text-foreground w-full disabled:opacity-50 disabled:cursor-not-allowed">
-              <SelectValue placeholder={filters.province ? "Localidad" : "Seleccione provincia"} />
-            </SelectTrigger>
-            <SelectContent>
-              {availableLocalities.map(locality => (
-                <SelectItem key={locality.id} value={locality.id}>{locality.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Fecha - visible en mobile y desktop */}
         <div className="md:col-span-1">
           <Select
             value={filters.date}
@@ -227,15 +267,20 @@ export function SearchBar({ title, provinces, localitiesByProvince }: SearchBarP
             </SelectContent>
           </Select>
         </div>
-
-        {/* Botón de búsqueda - más pequeño en desktop */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-1 flex gap-2">
           <Button
             onClick={handleSearch}
-            className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold w-full h-10"
+            className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold flex-1 h-10"
           >
             <Search className="h-4 w-4 mr-2" />
             BUSCAR
+          </Button>
+          <Button
+            onClick={handleClear}
+            variant="outline"
+            className="border-border hover:bg-muted font-semibold flex-1 h-10"
+          >
+            LIMPIAR
           </Button>
         </div>
       </div>

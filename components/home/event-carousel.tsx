@@ -2,59 +2,51 @@
 
 import type { Event } from "@/types/event"
 import { EventCard } from "./event-card"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useRef } from "react"
+import { Button } from "../ui/button"
+import { useRouter } from "next/navigation"
+import { Search } from "lucide-react"
 
-interface EventCarouselProps {
+interface EventGridProps {
   title: string
   events: Event[]
 }
 
-export function EventCarousel({ title, events }: EventCarouselProps) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-
-  const scroll = (direction: "left" | "right") => {
-    if (scrollRef.current) {
-      const scrollAmount = 300
-      scrollRef.current.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth",
-      })
-    }
+export function EventGrid({ title, events }: EventGridProps) {
+  const router = useRouter();
+  const handleClear = () => {
+    router.push('/eventos')
   }
 
   return (
     <div className="mb-12">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground">{title}</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={() => scroll("left")}
-            className="p-2 rounded-full bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-colors"
-            aria-label="Anterior"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => scroll("right")}
-            className="p-2 rounded-full bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-colors"
-            aria-label="Siguiente"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-      >
-        {events.map((event) => (
-          <div key={event.id} className="flex-none w-62.5 md:w-70 select-none">
-            <EventCard event={event} />
+      <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">{title}</h2>
+
+      {events.length === 0 ? (
+        <div className="col-span-full flex flex-col items-center justify-center py-16 px-4 bg-muted/30 rounded-lg border-2 border-dashed border-border">
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+            <Search className="w-8 h-8 text-muted-foreground" />
           </div>
-        ))}
-      </div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            No se encontraron eventos
+          </h3>
+          <p className="text-muted-foreground text-center mb-6 max-w-md">
+            No hay eventos que coincidan con los filtros seleccionados. Intenta ajustar los criterios de búsqueda.
+          </p>
+          <Button
+            onClick={handleClear}
+            variant="outline"
+            className="border-border hover:bg-muted font-semibold"
+          >
+            LIMPIAR FILTROS
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {events.map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
