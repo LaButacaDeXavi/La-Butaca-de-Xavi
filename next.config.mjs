@@ -3,6 +3,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  api: {
+    bodyParser: false, 
+  },
   images: {
     unoptimized: true,
     remotePatterns: [

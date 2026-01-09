@@ -53,7 +53,8 @@ export default async function getPerformances({ searchParams }: SearchParams) {
     } else if (endDate) {
         query = query.lte('date', endDate)
     } else {
-        query = query.lte('date', new Date().toLocaleDateString())
+        const today = new Date().toISOString().split('T')[0];
+        query = query.gte('date', today)
     }
 
     // Aplicar filtro de búsqueda por título de obra si existe
@@ -63,7 +64,7 @@ export default async function getPerformances({ searchParams }: SearchParams) {
 
     // Ordenar por fecha
     query = query.order('date', { ascending: true })
-    
+
     const { data, error } = await query.returns<PerformanceRow[]>()
 
     if (error) {

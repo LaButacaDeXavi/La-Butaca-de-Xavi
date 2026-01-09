@@ -75,8 +75,7 @@ export async function createCheckout({ dni, email, fullName, phone }: checkoutDa
         })
         .select()
         .single();
-
-
+    
     if (orderError) throw new Error('Error al crear el pago')
 
     const orderItems = data.checkout_items.map(item => ({
@@ -128,7 +127,7 @@ export async function createCheckout({ dni, email, fullName, phone }: checkoutDa
                 expiration_date_to: expiresAt,
 
                 // 🔔 Webhook
-                notification_url: `${process.env.NEXT_PUBLIC_SITE_URL}/webhook/mercadopago`,
+                notification_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/webhook/mercado-pago`,
 
                 back_urls: {
                     success: `${process.env.NEXT_PUBLIC_SITE_URL}/success`,
@@ -139,6 +138,7 @@ export async function createCheckout({ dni, email, fullName, phone }: checkoutDa
             }),
         }
     )
+    console.log("url de webhoo",process.env.NEXT_PUBLIC_SITE_URL)
 
     if (!response.ok) {
         const error = await response.text()

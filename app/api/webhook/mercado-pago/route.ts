@@ -11,11 +11,18 @@ const bearer = process.env.MERCADO_PAGO_ACCESS_TOKEN
 export async function POST(req: Request) {
 
     const rawBody = await req.text();
-
     const signatureHeader = req.headers.get("x-signature");
     const requestId = req.headers.get("x-request-id");
 
+    // 🔍 LOGS DE DEBUG
+    console.log("=== WEBHOOK DEBUG ===");
+    console.log("Signature Header:", signatureHeader);
+    console.log("Request ID:", requestId);
+    console.log("Raw Body:", rawBody);
+    console.log("Secret (primeros 10 chars):", secret.substring(0, 10));
+
     if (!signatureHeader || !requestId) {
+        console.log("❌ Falta signature o requestId");
         return new Response("Unauthorized", { status: 401 });
     }
 
@@ -23,27 +30,42 @@ export async function POST(req: Request) {
     const ts = parts.find(p => p.startsWith("ts="))?.split("=")[1];
     const v1 = parts.find(p => p.startsWith("v1="))?.split("=")[1];
 
+    console.log("Timestamp:", ts);
+    console.log("v1 (firma recibida):", v1);
+
     if (!ts || !v1) {
+        console.log("❌ No se pudo extraer ts o v1");
         return new Response("Unauthorized", { status: 401 });
     }
+    const data = JSON.parse(rawBody);
+    const paymentId = data.id;
 
-    const manifest = `${ts}.${requestId}.${rawBody}`;
+    const manifest = `id:${paymentId};request-id:${requestId};ts:${ts};`;
+
+    console.log("Manifest construido:", manifest);
 
     const expectedSignature = crypto
         .createHmac("sha256", secret)
         .update(manifest)
         .digest("hex");
 
+    console.log("Firma esperada:", expectedSignature);
+    console.log("Firma recibida:", v1);
+    console.log("¿Coinciden?:", expectedSignature === v1);
+
     if (expectedSignature !== v1) {
+        console.log("❌ Las firmas NO coinciden");
         return new Response("Unauthorized", { status: 401 });
     }
 
-    const data = JSON.parse(rawBody);
+    console.log("✅ Firma verificada correctamente");
+
+
     const supabase = createClient();
 
 
     const typePayment = data.type ?? ""
-    const paymentId = data.id;
+
 
     if (typePayment !== "payment" || !paymentId) return NextResponse.json('Todo ok', { status: 200 });
 
@@ -116,8 +138,7 @@ export async function POST(req: Request) {
             .eq("order_id", order.id);
 
         if (ticketsError || !tickets) {
-            console.log("error buscar orden", error)
-
+            console.log("error creando tickers", error)
             return NextResponse.json('Error creando tickets', { status: 500 });
         }
 
@@ -132,8 +153,9 @@ export async function POST(req: Request) {
             })
         );
 
+        //falta descontar stock
 
-        await sendMail(ticketsWithQr,order.buyer_email)
+        await sendMail(ticketsWithQr, order.buyer_email)
 
 
 
@@ -153,34 +175,34 @@ export async function OPTIONS() {
 
 
 async function sendMail(tickets: any[], email: string) {
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS,
-    },
-  });
+    const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: {
+            user: process.env.MAIL_USER,
+            pass: process.env.MAIL_PASS,
+        },
+    });
 
-  await transporter.sendMail({
-    from: '"Butaca Xavi" <tickets@butacaxavi.com>',
-    to: email,
-    subject: "Tus entradas",
-    html: `
+    await transporter.sendMail({
+        from: '"Butaca Xavi" <tickets@butacaxavi.com>',
+        to: email,
+        subject: "Tus entradas",
+        html: `
       <h2>Gracias por tu compra</h2>
       <p>Presentá estos códigos QR en el ingreso</p>
 
       ${tickets
-        .map(
-          (t) => `
+                .map(
+                    (t) => `
         <div style="margin-bottom:24px">
           <img src="${t.qrBase64}" width="200" />
           <p>Sección: ${t.sectionName}</p>
         </div>
       `
-        )
-        .join("")}
+                )
+                .join("")}
     `,
-  });
+    });
 }

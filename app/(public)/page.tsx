@@ -15,7 +15,10 @@ export default async function HomePage() {
       <Header />
 
       {/* Hero Carousel */}
-      <HeroCarousel events={mainEvents} />
+      {mainEvents.length > 0 && (
+
+        <HeroCarousel events={mainEvents} />
+      )}
       <div className="mt-5"></div>
       {/* Search Section */}
       <section className="container mx-auto px-4 py-8">
@@ -36,6 +39,8 @@ export default async function HomePage() {
 
 async function getPerformances() {
   const supabase = createClient()
+
+  const today = new Date().toISOString().split('T')[0];
 
   const { data, error } = await supabase
     .from("performances")
@@ -66,6 +71,7 @@ async function getPerformances() {
         )
       `)
     .eq('status', 'active')
+    .gte('date',today)
     .order('date', { ascending: true })
     .returns<PerformanceRow[]>()
 
@@ -107,7 +113,7 @@ async function getPerformances() {
   })
   const mainEvents = events?.filter(p => p.isMain)
 
-  return { events, mainEvents }
+  return { events: events ?? [], mainEvents: mainEvents ?? [] }
 }
 
 

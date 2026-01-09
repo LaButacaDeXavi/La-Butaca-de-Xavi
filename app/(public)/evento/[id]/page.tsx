@@ -19,6 +19,8 @@ export async function getEventById(id: string) {
 
   const supabase = createClient()
 
+  const today = new Date().toISOString().split('T')[0];
+
   const { data, error } = await supabase
     .from("performances")
     .select(`
@@ -76,8 +78,8 @@ export async function getEventById(id: string) {
       )
     `)
     .eq("id", id)
-    .eq('status','active')
-    .lte('date',new Date().toLocaleDateString())
+    .eq('status', 'active')
+    .gte('date', today)
     .single()
 
   if (error || !data) {
@@ -151,5 +153,5 @@ export async function getEventById(id: string) {
         : undefined
   }
 
-  return event
+  return event ?? []
 }

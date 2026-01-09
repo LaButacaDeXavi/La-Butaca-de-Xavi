@@ -31,7 +31,7 @@ const sanitizePayload = (promotion: PromotionPayload) => {
         value: type === "2x1" ? null : value,
         requires_code: null,
         max_uses_per_order: max_uses_per_order < 0 ? 0 : max_uses_per_order,
-        min_tickets: type === "2x1" && min_tickets < 2 ? 2 : value,
+        min_tickets: type === "2x1" && min_tickets < 2 ? 2 : min_tickets,
         is_active,
         valid_from: valid_from ,
         valid_until: valid_until 
