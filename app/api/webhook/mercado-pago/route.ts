@@ -10,16 +10,14 @@ const bearer = process.env.MERCADO_PAGO_ACCESS_TOKEN
 
 export async function POST(req: Request) {
 
-    const rawBody = await req.text();
+     const rawBody = await req.text();
     const signatureHeader = req.headers.get("x-signature");
     const requestId = req.headers.get("x-request-id");
 
-    // 🔍 LOGS DE DEBUG
     console.log("=== WEBHOOK DEBUG ===");
     console.log("Signature Header:", signatureHeader);
     console.log("Request ID:", requestId);
     console.log("Raw Body:", rawBody);
-    console.log("Secret (primeros 10 chars):", secret.substring(0, 10));
 
     if (!signatureHeader || !requestId) {
         console.log("❌ Falta signature o requestId");
@@ -37,11 +35,10 @@ export async function POST(req: Request) {
         console.log("❌ No se pudo extraer ts o v1");
         return new Response("Unauthorized", { status: 401 });
     }
-    const data = JSON.parse(rawBody);
-    const paymentId = data.id;
 
-    const manifest = `id:${paymentId};request-id:${requestId};ts:${ts};`;
-
+    // ✅ CORRECCIÓN: Usar el formato correcto del manifest
+    const manifest = `id:${JSON.parse(rawBody).data?.id || JSON.parse(rawBody).resource};request-id:${requestId};ts:${ts};`;
+    
     console.log("Manifest construido:", manifest);
 
     const expectedSignature = crypto
@@ -60,15 +57,17 @@ export async function POST(req: Request) {
 
     console.log("✅ Firma verificada correctamente");
 
-
+    // Ahora sí parseamos el body para usarlo
+    const data = JSON.parse(rawBody);
     const supabase = createClient();
 
+    const typePayment = data.topic ?? ""; // Cambiado de data.type a data.topic
+    const paymentId = data.resource; // Cambiado de data.id a data.resource
 
-    const typePayment = data.type ?? ""
-
-
-    if (typePayment !== "payment" || !paymentId) return NextResponse.json('Todo ok', { status: 200 });
-
+    if (typePayment !== "payment" || !paymentId) {
+        console.log("No es un pago o falta ID");
+        return NextResponse.json('Todo ok', { status: 200 });
+    }
     console.log("DataMP", data)
 
     const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
