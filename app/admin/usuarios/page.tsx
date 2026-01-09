@@ -1,6 +1,7 @@
 import UserPage from "./usuarios";
 import { getUsers } from "./actions";
 
+export const dynamic = "force-dynamic";
 
 export default async function page() {
     let users: any;

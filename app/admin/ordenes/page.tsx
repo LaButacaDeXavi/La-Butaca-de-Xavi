@@ -1,6 +1,8 @@
 import { OrdenesPage } from "./ordenes";
 import { createClient } from "@/lib/supabase/client";
 
+export const dynamic = "force-dynamic";
+
 
 export default async function Orders() {
   const supabase = createClient();

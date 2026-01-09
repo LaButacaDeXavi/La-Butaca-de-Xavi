@@ -4,6 +4,9 @@ import { getTheaters } from "../teatros/actions";
 import { getPromotions } from "../promociones/actions";
 import { getPerformances } from "./actions";
 
+export const dynamic = "force-dynamic";
+
+
 export default async function Page() {
 
   try {

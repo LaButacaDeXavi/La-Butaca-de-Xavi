@@ -2,6 +2,8 @@ import PlaysPage from "./obras";
 import { getPlays } from "./actions";
 import { getArtists } from "../artistas/actions";
 
+export const dynamic = "force-dynamic";
+
 
 export default async function Page() {
   try {

@@ -1,6 +1,9 @@
 import { getPromotions } from "./actions"
 import PromotionsPage from "./promociones"
 
+export const dynamic = "force-dynamic";
+
+
 export default async function page() {
     try {
 
