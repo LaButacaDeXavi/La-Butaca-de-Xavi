@@ -26,6 +26,10 @@ export async function createCheckout({ dni, email, fullName, phone }: checkoutDa
         .from("checkout_sessions")
         .select(`
             subtotal,
+            checkout_items(
+            section_id,
+            quantity
+            ),
             discount_amount,
             total,
             performances(
@@ -47,6 +51,7 @@ export async function createCheckout({ dni, email, fullName, phone }: checkoutDa
     if (error || !data) {
         throw new Error("Session vencida o no encontrada")
     }
+
     const discountTypeId = (data.discount_types as any).id
     const performancesId = (data.performances as any).id
     const title = ((data.performances as any).plays as any)?.title
@@ -54,8 +59,8 @@ export async function createCheckout({ dni, email, fullName, phone }: checkoutDa
     const discountAmount = data.discount_amount
     const total = data.total
 
-    const {data:order, error: orderError } = await supabase
-        .from('orders')
+    const { data: order, error: orderError } = await supabase
+        .from("orders")
         .insert({
             buyer_name: fullName,
             buyer_email: email,
@@ -65,12 +70,26 @@ export async function createCheckout({ dni, email, fullName, phone }: checkoutDa
             subtotal,
             discount_amount: discountAmount,
             discount_type_id: discountTypeId,
-            performances_id: performancesId
+            performances_id: performancesId,
+            status: "pending",
         })
         .select()
         .single();
 
+
     if (orderError) throw new Error('Error al crear el pago')
+
+    const orderItems = data.checkout_items.map(item => ({
+        orders_id: order.id,
+        section_id: item.section_id,
+        quantity: item.quantity,
+    }));
+
+    const { error: errorOrderItems } = await supabase
+        .from('orders_sections')
+        .insert(orderItems)
+
+    if (errorOrderItems) throw new Error('Error al crear el pago')
 
     // ⏱️ Expiración en 10 minutos
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
@@ -85,6 +104,7 @@ export async function createCheckout({ dni, email, fullName, phone }: checkoutDa
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
+                external_reference: order.id,
                 items: [
                     {
                         title,
@@ -122,6 +142,11 @@ export async function createCheckout({ dni, email, fullName, phone }: checkoutDa
 
     if (!response.ok) {
         const error = await response.text()
+        await supabase
+            .from('orders')
+            .delete()
+            .eq('id', order.id)
+
         console.error("Mercado Pago error:", error)
         throw new Error("Error creando el checkout")
     }
