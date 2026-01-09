@@ -95,7 +95,7 @@ export async function POST(req: Request) {
     // Ahora sí parseamos el body para usarlo
     const supabase = createClient();
 
-    const typePayment = data.topic ?? ""; // Cambiado de data.type a data.topic
+    const typePayment = data.type ?? "";
 
     if (typePayment !== "payment" || !paymentId) {
         console.log("No es un pago o falta ID");
