@@ -9,8 +9,7 @@ const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET ?? "";
 const bearer = process.env.MERCADO_PAGO_ACCESS_TOKEN
 
 export async function POST(req: Request) {
-
-     const rawBody = await req.text();
+    const rawBody = await req.text();
     const signatureHeader = req.headers.get("x-signature");
     const requestId = req.headers.get("x-request-id");
 
@@ -18,6 +17,7 @@ export async function POST(req: Request) {
     console.log("Signature Header:", signatureHeader);
     console.log("Request ID:", requestId);
     console.log("Raw Body:", rawBody);
+    console.log("Secret length:", secret.length);
 
     if (!signatureHeader || !requestId) {
         console.log("❌ Falta signature o requestId");
@@ -28,41 +28,74 @@ export async function POST(req: Request) {
     const ts = parts.find(p => p.startsWith("ts="))?.split("=")[1];
     const v1 = parts.find(p => p.startsWith("v1="))?.split("=")[1];
 
-    console.log("Timestamp:", ts);
-    console.log("v1 (firma recibida):", v1);
-
     if (!ts || !v1) {
         console.log("❌ No se pudo extraer ts o v1");
         return new Response("Unauthorized", { status: 401 });
     }
 
-    // ✅ CORRECCIÓN: Usar el formato correcto del manifest
-    const manifest = `id:${JSON.parse(rawBody).data?.id || JSON.parse(rawBody).resource};request-id:${requestId};ts:${ts};`;
-    
-    console.log("Manifest construido:", manifest);
+    const data = JSON.parse(rawBody);
+    const paymentId = data.resource || data.data?.id;
 
-    const expectedSignature = crypto
+    // 🔥 PRUEBA AMBOS FORMATOS
+
+    // Formato 1: Nuevo (el que estabas usando)
+    const manifest1 = `id:${paymentId};request-id:${requestId};ts:${ts};`;
+    const signature1 = crypto
         .createHmac("sha256", secret)
-        .update(manifest)
+        .update(manifest1)
         .digest("hex");
 
-    console.log("Firma esperada:", expectedSignature);
-    console.log("Firma recibida:", v1);
-    console.log("¿Coinciden?:", expectedSignature === v1);
+    console.log("\n--- FORMATO 1 (nuevo) ---");
+    console.log("Manifest:", manifest1);
+    console.log("Firma calculada:", signature1);
+    console.log("¿Coincide?:", signature1 === v1);
 
-    if (expectedSignature !== v1) {
-        console.log("❌ Las firmas NO coinciden");
+    // Formato 2: Antiguo (documentación vieja)
+    const manifest2 = `${ts}.${requestId}.${rawBody}`;
+    const signature2 = crypto
+        .createHmac("sha256", secret)
+        .update(manifest2)
+        .digest("hex");
+
+    console.log("\n--- FORMATO 2 (antiguo) ---");
+    console.log("Manifest:", manifest2);
+    console.log("Firma calculada:", signature2);
+    console.log("¿Coincide?:", signature2 === v1);
+
+    // Formato 3: Sin puntos ni comas
+    const manifest3 = `id:${paymentId};request-id:${requestId};ts:${ts}`;
+    const signature3 = crypto
+        .createHmac("sha256", secret)
+        .update(manifest3)
+        .digest("hex");
+
+    console.log("\n--- FORMATO 3 (sin ; final) ---");
+    console.log("Manifest:", manifest3);
+    console.log("Firma calculada:", signature3);
+    console.log("¿Coincide?:", signature3 === v1);
+
+    // Verifica si alguno coincide
+    const isValid = signature1 === v1 || signature2 === v1 || signature3 === v1;
+
+    if (!isValid) {
+        console.log("\n❌ NINGUNA FIRMA COINCIDE");
+
+        // 🔍 Prueba con el secret en diferentes encodings
+        console.log("\n--- PROBANDO ENCODINGS DEL SECRET ---");
+
+        // Prueba con secret trimmed
+        const secretTrimmed = secret.trim();
+        const sig4 = crypto.createHmac("sha256", secretTrimmed).update(manifest1).digest("hex");
+        console.log("Con secret.trim():", sig4, "¿Coincide?:", sig4 === v1);
+
         return new Response("Unauthorized", { status: 401 });
     }
 
-    console.log("✅ Firma verificada correctamente");
-
+    console.log("\n✅ FIRMA VERIFICADA CORRECTAMENTE");
     // Ahora sí parseamos el body para usarlo
-    const data = JSON.parse(rawBody);
     const supabase = createClient();
 
     const typePayment = data.topic ?? ""; // Cambiado de data.type a data.topic
-    const paymentId = data.resource; // Cambiado de data.id a data.resource
 
     if (typePayment !== "payment" || !paymentId) {
         console.log("No es un pago o falta ID");
