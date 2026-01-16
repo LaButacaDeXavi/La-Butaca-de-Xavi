@@ -9,11 +9,12 @@ import { parseLocalDate } from "@/lib/cart-utils";
 const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET ?? "";
 const bearer = process.env.MERCADO_PAGO_ACCESS_TOKEN
 export async function POST(req: Request) {
-    const rawBody = await req.text();
+   const rawBody = await req.text();
     const signatureHeader = req.headers.get("x-signature");
     const requestId = req.headers.get("x-request-id");
 
     if (!signatureHeader || !requestId) {
+        console.log("❌ Falta signature o requestId");
         return new Response("Unauthorized", { status: 401 });
     }
 
@@ -22,22 +23,41 @@ export async function POST(req: Request) {
     const v1 = parts.find(p => p.startsWith("v1="))?.split("=")[1];
 
     if (!ts || !v1) {
+        console.log("❌ No se pudo extraer ts o v1");
         return new Response("Unauthorized", { status: 401 });
     }
 
     const data = JSON.parse(rawBody);
     const paymentId = data.resource || data.data?.id;
 
-    const manifest = `id:${paymentId};request-id:${requestId};ts:${ts};`;
-    const signature = crypto
+    const manifest1 = `id:${paymentId};request-id:${requestId};ts:${ts};`;
+    const signature1 = crypto
         .createHmac("sha256", secret)
-        .update(manifest)
+        .update(manifest1)
         .digest("hex");
 
-    if (signature !== v1) {
+    const manifest2 = `${ts}.${requestId}.${rawBody}`;
+    const signature2 = crypto
+        .createHmac("sha256", secret)
+        .update(manifest2)
+        .digest("hex");
+
+    const manifest3 = `id:${paymentId};request-id:${requestId};ts:${ts}`;
+    const signature3 = crypto
+        .createHmac("sha256", secret)
+        .update(manifest3)
+        .digest("hex");
+
+    const isValid = signature1 === v1 || signature2 === v1 || signature3 === v1;
+
+    if (!isValid) {
+        console.log("\n❌ NINGUNA FIRMA COINCIDE");
+        const secretTrimmed = secret.trim();
+        const sig4 = crypto.createHmac("sha256", secretTrimmed).update(manifest1).digest("hex");
+
         return new Response("Unauthorized", { status: 401 });
     }
-
+    
     const typePayment = data.type ?? "";
 
     if (typePayment !== "payment" || !paymentId) {
