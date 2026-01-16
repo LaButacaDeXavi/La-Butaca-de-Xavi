@@ -105,17 +105,6 @@ export function Header() {
               Eventos
             </Link>
             <Link
-              href="/teatros"
-              className={`block py-2 text-sm font-medium transition-colors ${
-                isActive("/teatros") 
-                  ? "text-primary" 
-                  : "text-muted-foreground hover:text-primary"
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Teatros
-            </Link>
-            <Link
               href="/contacto"
               className={`block py-2 text-sm font-medium transition-colors ${
                 isActive("/contacto") 

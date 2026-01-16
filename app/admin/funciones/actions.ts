@@ -169,25 +169,9 @@ export async function updatePerformance(input: UpdatePerformanceInput) {
         return { success: false, message: "Error al actualizar la función" }
     }
 
-    // Obtener secciones existentes
-    const { data: existingSections, error: sectionsError } = await supabase
-        .from('performances_sections')
-        .select('name')
-        .eq('performances_id', input.id)
 
-    if (sectionsError) {
-        return { success: false, message: "Error al obtener secciones existentes" }
-    }
-
-    const existingNames = new Set(existingSections?.map(s => s.name.toLowerCase()) || [])
-
-    const newSections = input.sections.filter(s =>
-        !existingNames.has(s.name.toLowerCase())
-    )
-
-
-    if (newSections.length > 0) {
-        const sectionsPayload = newSections.map(s => ({
+    if (input.sections.length > 0) {
+        const sectionsPayload = input.sections.map(s => ({
             performances_id: input.id,
             name: s.name,
             price: s.price,

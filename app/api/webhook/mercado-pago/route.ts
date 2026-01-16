@@ -4,13 +4,8 @@ import crypto from "crypto"
 import QRCode from "qrcode";
 import nodemailer from "nodemailer";
 import { parseLocalDate } from "@/lib/cart-utils";
+import { error } from "console";
 
-
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-};
 
 
 const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET ?? "";
@@ -145,7 +140,7 @@ export async function POST(req: Request) {
 
         return new Response("Unauthorized - Invalid signature", { status: 401 });
     }
-    
+
     const typePayment = data.type ?? "";
 
     if (typePayment !== "payment" || !paymentId) {
@@ -209,6 +204,7 @@ async function processPayment(paymentId: string, externalReference: string) {
                 p_quantity: section.quantity,
             });
 
+            console.log(error)
             if (stockError) {
                 throw new Error(`Stock insuficiente para sección ${section.section_id}: ${stockError.message}`);
             }

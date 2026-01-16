@@ -110,7 +110,7 @@ export default function FuncionesPage({ perfomances, plays, promotions, theaters
           theaterId: formData.theaterId,
           time: formData.time,
           promotionId: formData.promotionId,
-          sections
+          sections: newSections
         })
 
         if (!data.success) return toast.error(data.message)
@@ -186,18 +186,6 @@ export default function FuncionesPage({ perfomances, plays, promotions, theaters
     }
   }
 
-  const toggleStatus = (id: string) => {
-    setFunctions(
-      functions.map((func) =>
-        func.id === id
-          ? {
-            ...func,
-            status: func.status === "active" ? "cancelled" : "active",
-          }
-          : func,
-      ),
-    )
-  }
 
   const resetForm = () => {
     setFormData({
