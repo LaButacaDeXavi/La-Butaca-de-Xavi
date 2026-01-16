@@ -70,12 +70,12 @@ async function getPerformances() {
           )
         )
       `)
-    .eq('status', 'active')
-    .gte('date',today)
+    .neq('status', 'desactivate')
+    .gte('date', today)
     .order('date', { ascending: true })
     .returns<PerformanceRow[]>()
 
-
+  console.log("Eventos", data)
   const events = data?.map(performance => {
     const discount =
       performance.performances_discounts?.[0]?.discount_types ?? null
@@ -112,6 +112,8 @@ async function getPerformances() {
     }
   })
   const mainEvents = events?.filter(p => p.isMain)
+
+  console.log("Eventos principales", mainEvents)
 
   return { events: events ?? [], mainEvents: mainEvents ?? [] }
 }
