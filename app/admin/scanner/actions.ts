@@ -3,7 +3,6 @@
 import { createClient } from "@/lib/supabase/server"
 import type { ScanResult } from "@/types/admin"
 
-
 export async function scanTicket(code: string): Promise<ScanResult> {
     const supabase = await createClient();
 
@@ -12,22 +11,27 @@ export async function scanTicket(code: string): Promise<ScanResult> {
         const { data: ticket, error } = await supabase
             .from('tickets')
             .select(`
-        *,
-        orders (
-          id,
-          buyer_name,
-          buyer_email
-        ),
-        shows (
-          id,
-          show_date,
-          show_hour,
-          plays (
-            id,
-            title
-          )
-        )
-      `)
+                id,
+                scanned,
+                scanned_at,
+                performances_sections(
+                    name
+                ),
+                orders(
+                    id,
+                    buyer_name,
+                    buyer_email,
+                    performances(
+                        id,
+                        date,
+                        time,
+                        plays(
+                            id,
+                            title
+                        )
+                    )
+                )
+            `)
             .eq('qr_code', code)
             .single()
 
@@ -38,17 +42,28 @@ export async function scanTicket(code: string): Promise<ScanResult> {
             }
         }
 
+        // ✅ Extraer datos correctamente (Supabase devuelve objetos/arrays según la relación)
+        const order = ticket.orders as any;
+        const performance = order.performances as any;
+        const play = performance.plays as any;
+        const section = ticket.performances_sections as any;
+
+        console.log('Ticket completo:', ticket);
+        console.log('Play title:', play?.title);
+
         if (ticket.scanned) {
             return {
                 success: false,
                 message: "Este ticket ya fue escaneado anteriormente",
                 ticket: {
                     id: ticket.id,
-                    orderId: ticket.order_id,
-                    customerName: `${ticket.orders.buyer_name}, ${ticket.orders.buyer_email}`,
-                    date: ticket.shows.show_date,
-                    time: ticket.shows.show_hour,
-                    showTitle: ticket.functions.shows.title,
+                    orderId: order.id,
+                    customerName: order.buyer_name,
+                    customerEmail: order.buyer_email,
+                    section: section?.name || 'Sin sección',
+                    date: performance.date,
+                    time: performance.time,
+                    showTitle: play.title,
                     alreadyScanned: true,
                     scannedAt: ticket.scanned_at
                 }
@@ -73,11 +88,13 @@ export async function scanTicket(code: string): Promise<ScanResult> {
             message: "Ticket validado correctamente",
             ticket: {
                 id: ticket.id,
-                orderId: ticket.order_id,
-                customerName: `${ticket.orders.buyer_name}, ${ticket.orders.buyer_email}`,
-                showTitle: ticket.functions.shows.title,
-                date: ticket.shows.show_date,
-                time: ticket.shows.show_hour,
+                orderId: order.id,
+                customerName: order.buyer_name,
+                customerEmail: order.buyer_email,
+                section: section?.name || 'Sin sección',
+                showTitle: play.title,
+                date: performance.date,
+                time: performance.time,
                 alreadyScanned: false
             }
         }
@@ -88,5 +105,4 @@ export async function scanTicket(code: string): Promise<ScanResult> {
             message: "Error al procesar el ticket"
         }
     }
-
 }

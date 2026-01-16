@@ -57,22 +57,22 @@ export interface Order {
   customerPhone: string
   customerDni: string
   ticketQuantity: number
-  totalAmount: number
+  discountType: string
+  subtotal: number
   discount: number
-  finalAmount: number
-  status: "pending" | "confirmed" | "cancelled"
+  total: number
+  status: "pending" | "paid" | "cancelled"
   tickets: Ticket[]
   createdAt: Date
 }
 
 export interface Ticket {
   id: string
-  orderId: string
-  showId: string
   qrCode: string
   scanned: boolean
   scannedAt?: Date
-  seatNumber?: string
+  seatNumber?: string | null
+  sectionName: string
 }
 
 export interface DashboardStats {
@@ -100,12 +100,14 @@ export type ScanResult = {
     id: string
     orderId: string
     customerName: string
+    customerEmail: string
     showTitle: string
     date: string
     time: string
     seatNumber?: string
     alreadyScanned: boolean
     scannedAt?: string
+    section: string
   }
 }
 

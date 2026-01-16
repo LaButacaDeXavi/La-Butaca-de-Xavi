@@ -110,7 +110,9 @@ export default function CarritoPage({ data }: CarritoPageProps) {
         } catch (error) {
             toast.error('Error al crear el pago')
         } finally {
-            setLoading(false)
+            setTimeout(() => {
+                setLoading(false)
+            }, 2000);
         }
 
     }

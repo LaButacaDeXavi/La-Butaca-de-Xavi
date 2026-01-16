@@ -43,7 +43,7 @@ export default async function getPerformances({ searchParams }: SearchParams) {
               )
             )
         `)
-        .eq('status', 'active')
+        .neq('status', 'desactivate')
 
     // Aplicar filtro de fecha si existe
     if (startDate && endDate) {

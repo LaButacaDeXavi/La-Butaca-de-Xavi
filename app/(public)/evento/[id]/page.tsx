@@ -59,7 +59,8 @@ export async function getEventById(id: string) {
       sections:performances_sections (
         id,
         name,
-        price
+        price,
+        available_seats
       ),
 
       performances_discounts (
@@ -87,9 +88,6 @@ export async function getEventById(id: string) {
     return null
   }
 
-  /* ======================
-     MAPEADO FINAL
-     ====================== */
 
   const event: Event = {
     id: data.id,
@@ -117,7 +115,8 @@ export async function getEventById(id: string) {
     sections: data.sections.map((s: any) => ({
       id: s.id,
       name: s.name,
-      price: s.price
+      price: s.price,
+      availableSeats: s.available_seats
     })),
 
     artist: data.play.play_artists.map(

@@ -6,7 +6,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, X } from "lucide-react"
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, X, Search } from "lucide-react"
 import type { Play, Promotion, Section, Performances, Theater } from "@/types/admin"
 import { formatPrice } from "@/lib/format"
 import { formatDate } from "@/lib/cart-utils"
@@ -23,7 +23,7 @@ interface funcionesPageProps {
 export default function FuncionesPage({ perfomances, plays, promotions, theaters }: funcionesPageProps) {
   const [loading, setLoading] = useState(false)
   const [functions, setFunctions] = useState<Performances[]>(perfomances)
-  const [perfomancesFiltered, setPerformanceFiltered] = useState<Performance[]>()
+  const [searchTerm, setSearchTerm] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingFunction, setEditingFunction] = useState<Performances | null>(null)
   const [formData, setFormData] = useState({
@@ -42,6 +42,18 @@ export default function FuncionesPage({ perfomances, plays, promotions, theaters
     name: "",
     totalSeats: 0,
     price: 0
+  })
+
+  // Filtrado de funciones
+  const filteredFunctions = functions.filter(func => {
+    const searchLower = searchTerm.toLowerCase()
+    return (
+      func.play.title.toLowerCase().includes(searchLower) ||
+      func.theater.name.toLowerCase().includes(searchLower) ||
+      func.theater.address.toLowerCase().includes(searchLower) ||
+      func.date.toString().includes(searchLower) ||
+      func.time.toLowerCase().includes(searchLower)
+    )
   })
 
   const handleAddSection = () => {
@@ -248,6 +260,17 @@ export default function FuncionesPage({ perfomances, plays, promotions, theaters
           </Button>
         </div>
       ) : (<>
+        {/* Input de filtrado */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Buscar por obra, teatro, fecha o hora..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
         <div className="bg-card border border-border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -266,7 +289,7 @@ export default function FuncionesPage({ perfomances, plays, promotions, theaters
                 </tr>
               </thead>
               <tbody>
-                {functions.map((func) => {
+                {filteredFunctions.map((func) => {
 
                   return (
                     <tr key={func.id} className="border-t border-border hover:bg-muted/30 transition-colors">

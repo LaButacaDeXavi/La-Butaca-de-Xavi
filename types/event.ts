@@ -56,6 +56,7 @@ type EventSection = {
   id: string
   name: string
   price: number
+  availableSeats:number
 }
 
 

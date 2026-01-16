@@ -66,10 +66,12 @@ export function TicketSelector({ event }: TicketSelectorProps) {
       }
 
       router.push("/carrito")
-    } catch {
-      toast.error("No se pudo iniciar la compra")
+    } catch (e) {
+      toast.error("No se pudo iniciar la compra", { description: (e as any).message || e })
     } finally {
-      setLoading(false)
+      setTimeout(() => {
+        setLoading(false)
+      }, 2000);
     }
   }
 
@@ -97,24 +99,31 @@ export function TicketSelector({ event }: TicketSelectorProps) {
               <span className="text-center">
                 {formatPrice(section.price)}
               </span>
+              {section.availableSeats === 0 ? (
+                <div className="">
+                  <p className="text-accent">Agotado</p>
+                </div>
+              ) : (
 
-              <Select
-                value={String(quantities[section.id])}
-                onValueChange={value =>
-                  handleQuantityChange(section.id, value)
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <SelectItem key={i} value={String(i)}>
-                      {i}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Select
+                  disabled={section.availableSeats === 0}
+                  value={String(quantities[section.id])}
+                  onValueChange={value =>
+                    handleQuantityChange(section.id, value)
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <SelectItem key={i} value={String(i)}>
+                        {i}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           ))}
         </div>

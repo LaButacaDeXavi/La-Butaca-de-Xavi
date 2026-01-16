@@ -1,4 +1,4 @@
-import type { Theater, Artist, Show, ShowFunction, Order } from "@/types/admin"
+import type { Theater, Artist, Order } from "@/types/admin"
 
 export const mockTheaters: Theater[] = [
   {
@@ -7,7 +7,6 @@ export const mockTheaters: Theater[] = [
     address: "Av. Corrientes 1530",
     city: "Buenos Aires",
     mapUrl: "https://maps.app.goo.gl/1in7p7AxnFxNb9o3A",
-    createdAt: new Date("2024-01-15"),
   },
   {
     id: "2",
@@ -15,7 +14,6 @@ export const mockTheaters: Theater[] = [
     address: "Cerrito 628",
     city: "Buenos Aires",
     mapUrl: "https://maps.app.goo.gl/1in7p7AxnFxNb9o3A",
-    createdAt: new Date("2024-02-20"),
   },
   {
     id: "3",
@@ -23,7 +21,6 @@ export const mockTheaters: Theater[] = [
     address: "Av. Corrientes 857",
     city: "Buenos Aires",
     mapUrl: "https://maps.app.goo.gl/1in7p7AxnFxNb9o3A",
-    createdAt: new Date("2024-03-10"),
   },
 ]
 
@@ -54,7 +51,7 @@ export const mockArtists: Artist[] = [
   },
 ]
 
-export const mockShows: Show[] = [
+export const mockShows: Performance[] = [
   {
     id: "1",
     title: "Franky Rizardo en Rosario",
@@ -138,10 +135,11 @@ export const mockFunctions: ShowFunction[] = [
 export const mockOrders: Order[] = [
   {
     id: "ORD001",
-    functionId: "1",
+    performance: {date:"",id:"",time:""},
     customerName: "Juan Pérez",
     customerEmail: "juan@email.com",
     customerPhone: "+54 9 11 1234-5678",
+    customerDni: "12345678",
     ticketQuantity: 2,
     totalAmount: 10000,
     discount: 5000,
@@ -152,8 +150,6 @@ export const mockOrders: Order[] = [
     tickets: [
       {
         id: "TKT001",
-        orderId: "ORD001",
-        functionId: "1",
         qrCode: "QR-TKT001-FRANKY",
         scanned: true,
         scannedAt: new Date("2025-01-09T21:15:00"),
@@ -161,8 +157,6 @@ export const mockOrders: Order[] = [
       },
       {
         id: "TKT002",
-        orderId: "ORD001",
-        functionId: "1",
         qrCode: "QR-TKT002-FRANKY",
         scanned: false,
         seatNumber: "A13",

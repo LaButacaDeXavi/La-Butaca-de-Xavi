@@ -138,7 +138,6 @@ export async function createCheckout({ dni, email, fullName, phone }: checkoutDa
             }),
         }
     )
-    console.log("url de webhoo",process.env.NEXT_PUBLIC_SITE_URL)
 
     if (!response.ok) {
         const error = await response.text()

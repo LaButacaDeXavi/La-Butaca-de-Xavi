@@ -33,7 +33,7 @@ export default function QRScanner({ onScan, resetScan }: QRScannerProps) {
 
     scanner.render(
       (decodedText) => {
-        const lastPart = decodedText.split("/").pop() || decodedText;
+        const lastPart = decodedText;
 
         onScan(lastPart);
 
