@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/client"
 import EventosPage from "./eventos"
 
+export const dynamic = "force-dynamic";
+
+
 interface SearchParams {
     searchParams: {
         q?: string
@@ -8,6 +11,7 @@ interface SearchParams {
         endDate?: string
     }
 }
+
 
 export default async function getPerformances({ searchParams }: SearchParams) {
     const { q, endDate, startDate } = await searchParams;

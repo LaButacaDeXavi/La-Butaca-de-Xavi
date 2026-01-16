@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/client";
 import { Event } from "@/types/event";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
+
 export default async function page({ params }: { params: { id: string } }) {
   const { id } = await params;
   const performance = await getEventById(id);

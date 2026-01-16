@@ -5,6 +5,7 @@ import { EventGrid } from "@/components/home/event-carousel"
 import { SearchBar } from "@/components/home/search-bar"
 import { createClient } from "@/lib/supabase/client"
 
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const { events, mainEvents }: any = await getPerformances();
@@ -75,7 +76,6 @@ async function getPerformances() {
     .order('date', { ascending: true })
     .returns<PerformanceRow[]>()
 
-  console.log("Eventos", data)
   const events = data?.map(performance => {
     const discount =
       performance.performances_discounts?.[0]?.discount_types ?? null
@@ -113,7 +113,6 @@ async function getPerformances() {
   })
   const mainEvents = events?.filter(p => p.isMain)
 
-  console.log("Eventos principales", mainEvents)
 
   return { events: events ?? [], mainEvents: mainEvents ?? [] }
 }
