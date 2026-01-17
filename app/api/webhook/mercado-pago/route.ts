@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const signatureHeader = req.headers.get("x-signature");
     const requestId = req.headers.get("x-request-id");
 
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(req.url);
 
     const paymentId = urlParams.get('data.id');
     const topic = urlParams.get('topic')

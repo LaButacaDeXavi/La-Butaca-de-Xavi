@@ -20,6 +20,7 @@ import {
   upsertCheckoutItem,
   validatePromotion
 } from "@/lib/actions/session"
+import { FullScreenLoader } from "../layout/loader"
 
 interface TicketSelectorProps {
   event: Event
@@ -138,6 +139,7 @@ export function TicketSelector({ event }: TicketSelectorProps) {
         </Button>
 
       </div>
+      <FullScreenLoader isLoading={loading} />
     </Card>
   )
 }

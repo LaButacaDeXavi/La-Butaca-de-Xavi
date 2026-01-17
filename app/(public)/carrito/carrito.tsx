@@ -12,6 +12,7 @@ import { Header } from "@/components/layout/header"
 import { toast } from "sonner"
 import { clearCheckout } from "@/lib/actions/session"
 import { createCheckout } from "@/lib/actions/mercadopago"
+import { FullScreenLoader } from "@/components/layout/loader"
 type CheckoutData = {
     subtotal: number
     discount_amount: number
@@ -362,6 +363,7 @@ export default function CarritoPage({ data }: CarritoPageProps) {
                     </div>
                 </div>
             </div>
+            <FullScreenLoader isLoading={loading} />
         </div>
     )
 }
