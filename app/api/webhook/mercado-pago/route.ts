@@ -11,7 +11,6 @@ const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET ?? "";
 const bearer = process.env.MERCADO_PAGO_ACCESS_TOKEN
 
 export async function POST(req: Request) {
-    const rawBody = await req.text();
     const signatureHeader = req.headers.get("x-signature");
     const requestId = req.headers.get("x-request-id");
 
@@ -19,8 +18,9 @@ export async function POST(req: Request) {
 
     const paymentId = urlParams.get('data.id');
     const topic = urlParams.get('topic')
+    console.log("TOPIC", topic)
 
-    if (topic && topic === 'merchant_order') return NextResponse.json('OK', { status: 200 })
+    if (!paymentId && topic && topic === 'merchant_order') return NextResponse.json({ message: 'ok' }, { status: 200 })
 
     if (!signatureHeader || !requestId) {
         console.log("❌ Falta signature o requestId");
@@ -55,21 +55,21 @@ export async function POST(req: Request) {
     const sha = hmac.digest('hex');
 
     if (sha !== hash) {
-        return NextResponse.json({ messgae: "Credenciales invalidas" }, { status: 200 })
+        console.log("Las firmas no coiciden")
+        return NextResponse.json({ messgae: "Credenciales invalidas" }, { status: 401 })
     }
 
     if (!paymentId) {
-        console.log("⚠️ No se pudo extraer payment ID");
-        return NextResponse.json('OK - No payment ID', { status: 200 });
+        console.log("No hay payment ID")
+        return NextResponse.json({ messgae: "No hay payment ID" }, { status: 400 })
     }
-
-
     console.log("💳 Payment ID extraído:", paymentId);
+
 
     processPayment(paymentId).catch(err =>
         console.error("❌ Error procesando pago:", err))
 
-    return NextResponse.json('OK', { status: 200 });
+    return NextResponse.json('Procesado', { status: 201 });
 }
 
 async function processPayment(paymentId: string) {
