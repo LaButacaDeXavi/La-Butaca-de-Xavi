@@ -18,8 +18,6 @@ export async function POST(req: Request) {
     const paymentId = url.searchParams.get('data.id') ?? url.searchParams.get('id');
     const topic = url.searchParams.get('topic') ?? url.searchParams.get('type');
 
-    console.log("TOPIC", topic)
-
     if (!paymentId && topic && topic === 'merchant_order') return NextResponse.json({ message: 'ok' }, { status: 200 })
 
     console.log("PaymentID", paymentId)
@@ -65,8 +63,6 @@ export async function POST(req: Request) {
         console.log("No hay payment ID")
         return NextResponse.json({ messgae: "No hay payment ID" }, { status: 400 })
     }
-    console.log("💳 Payment ID extraído:", paymentId);
-
 
     await processPayment(paymentId).catch(err =>
         console.error("❌ Error procesando pago:", err))
@@ -100,11 +96,6 @@ async function processPayment(paymentId: string) {
         }
 
         const paymentData = await paymentResponse.json();
-        console.log("📋 Datos del pago desde MercadoPago:");
-        console.log("   💰 Estado:", paymentData.status);
-        console.log("   💵 Monto:", paymentData.transaction_amount);
-        console.log("   📝 External reference:", paymentData.external_reference);
-        console.log("   🔢 Payment ID:", paymentData.id);
 
         if (!paymentData.external_reference) {
             console.log("⚠️ No hay external_reference en el pago, ignorando");
@@ -126,10 +117,6 @@ async function processPayment(paymentId: string) {
             throw new Error(`Order not found: ${orderError?.message}`);
         }
 
-        console.log("📦 Orden encontrada:");
-        console.log("   🆔 ID:", order.id);
-        console.log("   📊 Estado actual:", order.status);
-        console.log("   🎫 Secciones:", order.orders_sections.length);
 
         if (order.status !== 'pending') {
             console.log(`⚠️ Orden ya procesada (estado: ${order.status}), ignorando webhook duplicado`);
@@ -141,18 +128,16 @@ async function processPayment(paymentId: string) {
             return;
         }
 
-        console.log("✅ Pago aprobado, procesando orden...");
-
         // Decrementar stock
         console.log("📉 Decrementando stock...");
         for (const section of order.orders_sections) {
             console.log(`   → Sección ${section.section_id}: -${section.quantity}`);
 
-            const { error: stockError } = await supabase.rpc("decrement_section_stock", {
+            const { data, error: stockError } = await supabase.rpc("decrement_section_stock", {
                 p_section_id: section.section_id,
                 p_quantity: section.quantity,
             });
-
+            console.log("DATA RESTAR STOCK", data)
             if (stockError) {
                 console.error(`   ❌ Error en sección ${section.section_id}:`, stockError.message);
                 throw new Error(`Stock insuficiente: ${stockError.message}`);
@@ -172,7 +157,6 @@ async function processPayment(paymentId: string) {
             }))
         );
 
-        console.log(`   → Tickets a crear: ${ticketsToInsert.length}`);
 
         const [updateResult, insertResult] = await Promise.all([
             supabase.from('orders').update({ status: 'paid' }).eq('id', order.id),
@@ -193,11 +177,8 @@ async function processPayment(paymentId: string) {
         }
 
         console.log(`✅ Tickets creados: ${insertResult.data.length}`);
-        console.log(`✅ Estado de orden actualizado a: paid`);
-        console.log(`✅ PAGO PROCESADO EXITOSAMENTE`);
-        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
-        // Enviar email (no bloquea el proceso principal)
-        sendMail(insertResult.data as any, order.id).catch(err =>
+
+        await sendMail(insertResult.data as any, order.id).catch(err =>
             console.error("⚠️ Error enviando email (no crítico):", err)
         );
 
