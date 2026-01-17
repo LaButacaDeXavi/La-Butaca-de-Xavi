@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     console.log("💳 Payment ID extraído:", paymentId);
 
 
-    processPayment(paymentId).catch(err =>
+    await processPayment(paymentId).catch(err =>
         console.error("❌ Error procesando pago:", err))
 
     return NextResponse.json('Procesado', { status: 201 });
@@ -197,7 +197,7 @@ async function processPayment(paymentId: string) {
         console.log(`✅ PAGO PROCESADO EXITOSAMENTE`);
         console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
         // Enviar email (no bloquea el proceso principal)
-        await sendMail(insertResult.data as any, order.id).catch(err =>
+        sendMail(insertResult.data as any, order.id).catch(err =>
             console.error("⚠️ Error enviando email (no crítico):", err)
         );
 
