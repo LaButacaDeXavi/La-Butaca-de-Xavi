@@ -4,156 +4,75 @@ import crypto from "crypto"
 import QRCode from "qrcode";
 import nodemailer from "nodemailer";
 import { parseLocalDate } from "@/lib/cart-utils";
-import { error } from "console";
 
 
 
 const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET ?? "";
 const bearer = process.env.MERCADO_PAGO_ACCESS_TOKEN
+
 export async function POST(req: Request) {
     const rawBody = await req.text();
     const signatureHeader = req.headers.get("x-signature");
     const requestId = req.headers.get("x-request-id");
 
-    // 📝 LOGGING INICIAL
-    console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("🔔 WEBHOOK RECIBIDO");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("📝 Request ID:", requestId);
-    console.log("🔑 Secret length:", secret.length);
-    console.log("📦 Body length:", rawBody.length);
-    console.log("📋 Body preview:", rawBody.substring(0, 200));
+    const urlParams = new URLSearchParams(window.location.search);
+
+    const paymentId = urlParams.get('data.id');
+    const topic = urlParams.get('topic')
+
+    if (topic && topic === 'merchant_order') return NextResponse.json('OK', { status: 200 })
 
     if (!signatureHeader || !requestId) {
         console.log("❌ Falta signature o requestId");
         return new Response("Unauthorized - Missing headers", { status: 401 });
     }
+    const parts = signatureHeader.split(',');
+    let ts;
+    let hash;
 
-    const parts = signatureHeader.split(",");
-    const ts = parts.find(p => p.startsWith("ts="))?.split("=")[1];
-    const v1 = parts.find(p => p.startsWith("v1="))?.split("=")[1];
+    parts.forEach(part => {
+        const [key, value] = part.split('=');
+        if (key && value) {
+            const trimmedKey = key.trim();
+            const trimmedValue = value.trim();
+            if (trimmedKey === 'ts') {
+                ts = trimmedValue;
+            } else if (trimmedKey === 'v1') {
+                hash = trimmedValue;
+            }
+        }
+    });
 
-    console.log("🔐 Signature parts:");
-    console.log("   ts:", ts);
-    console.log("   v1:", v1);
-
-    if (!ts || !v1) {
+    if (!ts || !hash) {
         console.log("❌ No se pudo extraer ts o v1");
         return new Response("Unauthorized - Invalid signature format", { status: 401 });
     }
+    const manifest = `id:${paymentId};request-id:${requestId};ts:${ts};`;
 
-    let data;
-    try {
-        data = JSON.parse(rawBody);
-    } catch (e) {
-        console.log("❌ Error parsing JSON:", e);
-        return new Response("Bad Request - Invalid JSON", { status: 400 });
+    const hmac = crypto.createHmac('sha256', secret);
+    hmac.update(manifest);
+
+    const sha = hmac.digest('hex');
+
+    if (sha !== hash) {
+        return NextResponse.json({ messgae: "Credenciales invalidas" }, { status: 200 })
     }
-
-    console.log("📋 Parsed data:", JSON.stringify(data, null, 2));
-
-    // Extraer payment ID de TODAS las formas posibles
-    const paymentId =
-        data.resource ||
-        data.data?.id ||
-        data.id ||
-        (typeof data === 'string' ? data : null);
-
-    console.log("💳 Payment ID extraído:", paymentId);
 
     if (!paymentId) {
         console.log("⚠️ No se pudo extraer payment ID");
         return NextResponse.json('OK - No payment ID', { status: 200 });
     }
 
-    // 🔐 VALIDAR FIRMA CON MÚLTIPLES FORMATOS
-    const validationResults = [];
 
-    // Formato 1: Con punto y coma final
-    const manifest1 = `id:${paymentId};request-id:${requestId};ts:${ts};`;
-    const signature1 = crypto.createHmac("sha256", secret).update(manifest1).digest("hex");
-    validationResults.push({
-        format: "Formato 1 (con ;)",
-        manifest: manifest1,
-        signature: signature1,
-        valid: signature1 === v1
-    });
+    console.log("💳 Payment ID extraído:", paymentId);
 
-    // Formato 2: Sin punto y coma final
-    const manifest2 = `id:${paymentId};request-id:${requestId};ts:${ts}`;
-    const signature2 = crypto.createHmac("sha256", secret).update(manifest2).digest("hex");
-    validationResults.push({
-        format: "Formato 2 (sin ;)",
-        manifest: manifest2,
-        signature: signature2,
-        valid: signature2 === v1
-    });
-
-    // Formato 3: Nuevo formato de MP
-    const manifest3 = `${ts}.${requestId}.${rawBody}`;
-    const signature3 = crypto.createHmac("sha256", secret).update(manifest3).digest("hex");
-    validationResults.push({
-        format: "Formato 3 (nuevo)",
-        manifest: manifest3.substring(0, 100) + "...",
-        signature: signature3,
-        valid: signature3 === v1
-    });
-
-    // Formato 4: Con secret trimmed (por si tiene espacios)
-    const secretTrimmed = secret.trim();
-    const signature4 = crypto.createHmac("sha256", secretTrimmed).update(manifest1).digest("hex");
-    validationResults.push({
-        format: "Formato 4 (secret trimmed)",
-        manifest: manifest1,
-        signature: signature4,
-        valid: signature4 === v1
-    });
-
-    console.log("\n🔐 VALIDACIÓN DE FIRMAS:");
-    validationResults.forEach((result, i) => {
-        console.log(`\n   ${i + 1}. ${result.format}`);
-        console.log(`      Manifest: ${result.manifest.substring(0, 80)}...`);
-        console.log(`      Calculado: ${result.signature}`);
-        console.log(`      Esperado:  ${v1}`);
-        console.log(`      ${result.valid ? '✅ VÁLIDO' : '❌ INVÁLIDO'}`);
-    });
-
-    const isValid = validationResults.some(r => r.valid);
-
-    if (!isValid) {
-        console.log("\n❌ NINGUNA FIRMA COINCIDE");
-        console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-
-        // Guardar el intento fallido para análisis
-        const supabase = createClient();
-        await supabase.from('webhook_failures').insert({
-            payment_id: paymentId,
-            error_message: 'Signature validation failed',
-            retry_count: 0,
-            raw_data: {
-                signature_header: signatureHeader,
-                request_id: requestId,
-                body: data,
-                validation_results: validationResults
-            }
-        });
-
-        return new Response("Unauthorized - Invalid signature", { status: 401 });
-    }
-
-    const typePayment = data.type ?? "";
-
-    if (typePayment !== "payment" || !paymentId) {
-        return NextResponse.json('OK', { status: 200 });
-    }
-    processPayment(paymentId, data.external_reference).catch(err =>
-        console.error("❌ Error procesando pago:", err)
-    );
+    processPayment(paymentId).catch(err =>
+        console.error("❌ Error procesando pago:", err))
 
     return NextResponse.json('OK', { status: 200 });
 }
 
-async function processPayment(paymentId: string, externalReference: string) {
+async function processPayment(paymentId: string) {
     const supabase = createClient();
 
     try {
@@ -226,7 +145,7 @@ async function processPayment(paymentId: string, externalReference: string) {
         console.log("📉 Decrementando stock...");
         for (const section of order.orders_sections) {
             console.log(`   → Sección ${section.section_id}: -${section.quantity}`);
-            
+
             const { error: stockError } = await supabase.rpc("decrement_section_stock", {
                 p_section_id: section.section_id,
                 p_quantity: section.quantity,
@@ -236,7 +155,7 @@ async function processPayment(paymentId: string, externalReference: string) {
                 console.error(`   ❌ Error en sección ${section.section_id}:`, stockError.message);
                 throw new Error(`Stock insuficiente: ${stockError.message}`);
             }
-            
+
             console.log(`   ✅ Stock decrementado correctamente`);
         }
 
@@ -285,7 +204,7 @@ async function processPayment(paymentId: string, externalReference: string) {
 
         await supabase.from('webhook_failures').insert({
             payment_id: paymentId,
-            external_reference: externalReference,
+            external_reference: null,
             error_message: error instanceof Error ? error.message : 'Unknown error',
             retry_count: 0
         })
