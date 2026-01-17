@@ -157,7 +157,11 @@ async function processPayment(paymentId: string, externalReference: string) {
     const supabase = createClient();
 
     try {
-        // Obtener datos del pago
+        console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        console.log(`🔄 PROCESANDO PAGO: ${paymentId}`);
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+
+        // Obtener datos del pago desde MercadoPago
         const paymentResponse = await fetch(
             `https://api.mercadopago.com/v1/payments/${paymentId}`,
             {
@@ -169,10 +173,22 @@ async function processPayment(paymentId: string, externalReference: string) {
         );
 
         if (!paymentResponse.ok) {
+            const errorText = await paymentResponse.text();
+            console.error(`❌ Error respuesta MP (${paymentResponse.status}):`, errorText);
             throw new Error(`Error fetching payment: ${paymentResponse.status}`);
         }
 
         const paymentData = await paymentResponse.json();
+        console.log("📋 Datos del pago desde MercadoPago:");
+        console.log("   💰 Estado:", paymentData.status);
+        console.log("   💵 Monto:", paymentData.transaction_amount);
+        console.log("   📝 External reference:", paymentData.external_reference);
+        console.log("   🔢 Payment ID:", paymentData.id);
+
+        if (!paymentData.external_reference) {
+            console.log("⚠️ No hay external_reference en el pago, ignorando");
+            return;
+        }
 
         const { data: order, error: orderError } = await supabase
             .from('orders')
@@ -185,32 +201,47 @@ async function processPayment(paymentId: string, externalReference: string) {
             .single();
 
         if (orderError || !order) {
+            console.error("❌ Error buscando orden:", orderError?.message);
             throw new Error(`Order not found: ${orderError?.message}`);
         }
 
+        console.log("📦 Orden encontrada:");
+        console.log("   🆔 ID:", order.id);
+        console.log("   📊 Estado actual:", order.status);
+        console.log("   🎫 Secciones:", order.orders_sections.length);
+
         if (order.status !== 'pending') {
-            console.log("⚠️ Orden ya procesada, ignorando webhook duplicado");
+            console.log(`⚠️ Orden ya procesada (estado: ${order.status}), ignorando webhook duplicado`);
             return;
         }
 
         if (paymentData.status !== "approved") {
-            console.log("⚠️ Pago no aprobado:", paymentData.status);
+            console.log(`⚠️ Pago no aprobado (estado: ${paymentData.status}), ignorando`);
             return;
         }
 
+        console.log("✅ Pago aprobado, procesando orden...");
+
+        // Decrementar stock
+        console.log("📉 Decrementando stock...");
         for (const section of order.orders_sections) {
+            console.log(`   → Sección ${section.section_id}: -${section.quantity}`);
+            
             const { error: stockError } = await supabase.rpc("decrement_section_stock", {
                 p_section_id: section.section_id,
                 p_quantity: section.quantity,
             });
 
-            console.log(error)
             if (stockError) {
-                throw new Error(`Stock insuficiente para sección ${section.section_id}: ${stockError.message}`);
+                console.error(`   ❌ Error en sección ${section.section_id}:`, stockError.message);
+                throw new Error(`Stock insuficiente: ${stockError.message}`);
             }
+            
+            console.log(`   ✅ Stock decrementado correctamente`);
         }
 
         // Crear tickets
+        console.log("🎫 Creando tickets...");
         const ticketsToInsert = order.orders_sections.flatMap(section =>
             Array.from({ length: section.quantity }, () => ({
                 order_id: order.id,
@@ -220,6 +251,8 @@ async function processPayment(paymentId: string, externalReference: string) {
             }))
         );
 
+        console.log(`   → Tickets a crear: ${ticketsToInsert.length}`);
+
         const [updateResult, insertResult] = await Promise.all([
             supabase.from('orders').update({ status: 'paid' }).eq('id', order.id),
             supabase.from('tickets').insert(ticketsToInsert).select(`
@@ -228,17 +261,20 @@ async function processPayment(paymentId: string, externalReference: string) {
             `)
         ]);
 
-        // ⚠️ Verificar ambos resultados
         if (updateResult.error) {
+            console.error("❌ Error actualizando orden:", updateResult.error.message);
             throw new Error(`Error actualizando orden: ${updateResult.error.message}`);
         }
 
         if (insertResult.error || !insertResult.data) {
+            console.error("❌ Error creando tickets:", insertResult.error?.message);
             throw new Error(`Error creando tickets: ${insertResult.error?.message}`);
         }
 
-        console.log(`✅ Pago procesado correctamente: ${order.id}`);
-
+        console.log(`✅ Tickets creados: ${insertResult.data.length}`);
+        console.log(`✅ Estado de orden actualizado a: paid`);
+        console.log(`✅ PAGO PROCESADO EXITOSAMENTE`);
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
         // Enviar email (no bloquea el proceso principal)
         await sendMail(insertResult.data as any, order.id).catch(err =>
             console.error("⚠️ Error enviando email (no crítico):", err)
