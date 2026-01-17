@@ -14,13 +14,15 @@ export async function POST(req: Request) {
     const signatureHeader = req.headers.get("x-signature");
     const requestId = req.headers.get("x-request-id");
 
-    const urlParams = new URLSearchParams(req.url);
+    const url = new URL(req.url);
+    const paymentId = url.searchParams.get('data.id') ?? url.searchParams.get('id');
+    const topic = url.searchParams.get('topic') ?? url.searchParams.get('type');
 
-    const paymentId = urlParams.get('data.id');
-    const topic = urlParams.get('topic')
     console.log("TOPIC", topic)
 
     if (!paymentId && topic && topic === 'merchant_order') return NextResponse.json({ message: 'ok' }, { status: 200 })
+
+    console.log("PaymentID", paymentId)
 
     if (!signatureHeader || !requestId) {
         console.log("❌ Falta signature o requestId");
